@@ -1,0 +1,6 @@
+- environment variables support
+- be able to configure logging level
+- be able to configure topic exclusion
+- be able to configure prometheus port
+- dockerfile and docker-compose example
+- readme 
