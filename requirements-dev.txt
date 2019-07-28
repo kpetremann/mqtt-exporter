@@ -1,3 +1,4 @@
 black
 pylama
 pdbpp
+pylint

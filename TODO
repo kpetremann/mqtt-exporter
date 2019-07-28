@@ -1,6 +1,6 @@
-- environment variables support
-- be able to configure logging level
 - be able to configure topic exclusion
-- be able to configure prometheus port
+- be able to suscribe only to a list of topic
+- possibility to have a single value for a topic
+- be able to customize known metrics
 - dockerfile and docker-compose example
-- readme 
+- readme

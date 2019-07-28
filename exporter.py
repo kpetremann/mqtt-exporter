@@ -3,14 +3,17 @@
 
 import json
 import logging
-from prometheus_client import Gauge, start_http_server
+import os
 
 import paho.mqtt.client as mqtt
+from prometheus_client import Gauge, start_http_server
 
-METRIC = Gauge("mqtt_metric", "Metric generated from MQTT metric.", ["topic", "metric_name"])
-
-logging.basicConfig()
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
+PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
+
+# global variable
+prom_metrics = {}  # pylint: disable=C0103
 
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
@@ -24,21 +27,39 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         payload = json.loads(msg.payload)
         topic = msg.topic.replace("/", "_")
     except json.JSONDecodeError:
-        LOG.warning('Failed to parse as JSON: "%s"', msg.payload)
+        LOG.warning('failed to parse as JSON: "%s"', msg.payload)
         return
 
     for metric, value in payload.items():
+        # we only expose numeric values
         try:
             metric_value = float(value)
-            METRIC.labels(topic=topic, metric_name=metric).set(metric_value)
         except ValueError:
-            LOG.warning('Failed to convert: "%s=%s"', metric, value)
+            LOG.warning("Failed to convert %s: %s", metric, value)
+            continue
+
+        # create metric if does not exist
+        prom_metric_name = f"{PREFIX}{metric}"
+        if not prom_metrics.get(prom_metric_name):
+            prom_metrics[prom_metric_name] = Gauge(
+                prom_metric_name, "metric generated from MQTT message.", ["topic"]
+            ).labels(topic=topic)
+            LOG.info("creating prometheus metric: %s", prom_metric_name)
+
+        # expose the metric to prometheus
+        prom_metrics[prom_metric_name].set(metric_value)
+        LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
 
 
 def main():
     """Start the exporter."""
+    # get parameters from environment
+    mqtt_address = os.environ.get("MQTT_ADDRESS", "127.0.0.1")
+    mqtt_port = os.environ.get("MQTT_PORT", 1883)
+    mqtt_keepalive = os.environ.get("MQTT_KEEPALIVE", 60)
+
     # start prometheus server
-    start_http_server(9000)
+    start_http_server(os.environ.get("PROMETHEUS_PORT", 9000))
 
     # define mqtt client
     client = mqtt.Client()
@@ -46,7 +67,7 @@ def main():
     client.on_message = expose_metrics
 
     # start the connection and the loop
-    client.connect("127.0.0.1", 1883, 60)
+    client.connect(mqtt_address, mqtt_port, mqtt_keepalive)
     client.loop_forever()
 
 
