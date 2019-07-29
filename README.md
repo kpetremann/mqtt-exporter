@@ -30,12 +30,13 @@ humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 Parameters are passed using environment variables.
 
 The list of parameters available are:
+- LOG_LEVEL: Logging level (default: INFO)
 - MQTT_ADDRESS: IP or hostname of MQTT broker (default: 127.0.0.1)
 - MQTT_PORT: TCP port of MQTT broker (default: 1883)
 - MQTT_KEEPALIVE: Keep alive interval to maintain connection with MQTT broker (default: 60)
 - PROMETHEUS_PORT: HTTP server PORT to expose Prometheus metrics (default: 9000) 
 - PROMETHEUS_PREFIX: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
-- LOG_LEVEL: Logging level (default: INFO)
+- TOPIC_LABEL: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
 
 
 ### Deployment

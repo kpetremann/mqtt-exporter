@@ -30,6 +30,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         LOG.warning('failed to parse as JSON: "%s"', msg.payload)
         return
 
+    topic_label = os.environ.get("TOPIC_LABEL", "topic")
     for metric, value in payload.items():
         # we only expose numeric values
         try:
@@ -42,8 +43,8 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         prom_metric_name = f"{PREFIX}{metric}"
         if not prom_metrics.get(prom_metric_name):
             prom_metrics[prom_metric_name] = Gauge(
-                prom_metric_name, "metric generated from MQTT message.", ["topic"]
-            ).labels(topic=topic)
+                prom_metric_name, "metric generated from MQTT message.", [topic_label]
+            ).labels(**{topic_label: topic})
             LOG.info("creating prometheus metric: %s", prom_metric_name)
 
         # expose the metric to prometheus
