@@ -4,7 +4,51 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# mqtt-exporter
-Simple generic MQTT exporter for IOT
+# MQTT-exporter
 
-Tested only with Mosquitto MQTT and Xiaomi sensors.
+## Description
+
+Simple and generic Prometheus exporter for MQTT.
+Tested with Mosquitto MQTT and Xiaomi sensors.
+
+It exposes metrics from MQTT message out of the box (you just need to specify the target if not on localhost).
+
+MQTT-exporter expects a topic and a JSON payload.
+
+### Example
+```
+topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity":45.37}'
+```
+will be converted as:
+```
+temperature{topic="zigbee2mqtt_0x00157d00032b1234"} 25.24
+humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
+```
+
+### Deployment
+
+#### Docker
+
+```shell
+docker run -it -p 9000:9000 -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
+```
+
+#### Docker Compose
+
+```yaml
+version: "3"
+services:
+    mqtt-exporter:
+        image: kpetrem/mqtt-exporter
+        ports:
+            - 9000:9000
+        environment:
+            - MQTT_ADDRESS=192.168.0.1
+```
+
+#### Standalone
+
+```
+pip install -r requirements.txt
+MQTT_ADDRESS=192.168.0.1 python exporter.py
+```
