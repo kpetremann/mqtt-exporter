@@ -1,6 +1,6 @@
 - be able to configure topic exclusion
 - be able to suscribe only to a list of topic
 - possibility to have a single value for a topic
-- be able to customize known metrics
+- be able to customize known metrics with discovery
 - dockerfile and docker-compose example
 - readme
