@@ -44,11 +44,11 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         if not prom_metrics.get(prom_metric_name):
             prom_metrics[prom_metric_name] = Gauge(
                 prom_metric_name, "metric generated from MQTT message.", [topic_label]
-            ).labels(**{topic_label: topic})
+            )
             LOG.info("creating prometheus metric: %s", prom_metric_name)
 
         # expose the metric to prometheus
-        prom_metrics[prom_metric_name].set(metric_value)
+        prom_metrics[prom_metric_name].labels(**{topic_label: topic}).set(metric_value)
         LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
 
 
