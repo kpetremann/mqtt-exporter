@@ -4,6 +4,8 @@
 import json
 import logging
 import os
+import signal
+import sys
 
 import paho.mqtt.client as mqtt
 from prometheus_client import Gauge, start_http_server
@@ -54,6 +56,23 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
 
 def main():
     """Start the exporter."""
+    client = mqtt.Client()
+
+    def stop_request(signum, frame):
+        """Stop handler for SIGTERM and SIGINT.
+
+        Keyword arguments:
+        signum -- signal number
+        frame -- None or a frame object. Represents execution frames
+        """
+        LOG.warning("Stopping MQTT exporter")
+        LOG.debug("SIGNAL: %s, FRAME: %s", signum, frame)
+        client.disconnect()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, stop_request)
+    signal.signal(signal.SIGINT, stop_request)
+
     # get parameters from environment
     mqtt_address = os.environ.get("MQTT_ADDRESS", "127.0.0.1")
     mqtt_port = os.environ.get("MQTT_PORT", 1883)
@@ -63,7 +82,6 @@ def main():
     start_http_server(os.environ.get("PROMETHEUS_PORT", 9000))
 
     # define mqtt client
-    client = mqtt.Client()
     client.on_connect = subscribe
     client.on_message = expose_metrics
 
