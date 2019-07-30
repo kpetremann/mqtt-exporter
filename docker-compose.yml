@@ -1,0 +1,8 @@
+version: "3"
+services:
+  mqtt-exporter:
+    image: kpetrem/mqtt-exporter
+    ports:
+      - 9000:9000
+    environment:
+      - MQTT_ADDRESS=192.168.0.1
