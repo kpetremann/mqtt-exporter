@@ -34,6 +34,8 @@ The list of parameters are:
 -   `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
 -   `MQTT_PORT`: TCP port of MQTT broker (default: 1883)
 -   `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
+-   `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
+-   `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
 -   `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000) 
 -   `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
 -   `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
