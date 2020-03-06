@@ -86,7 +86,7 @@ def main():
     client.on_message = expose_metrics
 
     # start the connection and the loop
-    client.connect(mqtt_address, mqtt_port, mqtt_keepalive)
+    client.connect(mqtt_address, int(mqtt_port), mqtt_keepalive)
     client.loop_forever()
 
 
