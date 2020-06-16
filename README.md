@@ -36,7 +36,7 @@ The list of parameters are:
 -   `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
 -   `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
 -   `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
--   `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000) 
+-   `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
 -   `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
 -   `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
 
@@ -64,6 +64,6 @@ services:
 #### Using Python
 
 ```
-pip install -r requirements.txt
+pip install -r requirements/base.txt
 MQTT_ADDRESS=192.168.0.1 python exporter.py
 ```
