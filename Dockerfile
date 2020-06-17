@@ -7,6 +7,6 @@ COPY requirements/base.txt ./
 RUN pip install -r base.txt
 
 # clean
-RUN rm requirements.txt
+RUN rm base.txt
 
 CMD [ "python", "/opt/mqtt-exporter/exporter.py" ]
