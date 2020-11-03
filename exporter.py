@@ -37,7 +37,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         # we only expose numeric values
         try:
             metric_value = float(value)
-        except ValueError:
+        except (ValueError, TypeError):
             LOG.warning("Failed to convert %s: %s", metric, value)
             continue
 
