@@ -29,7 +29,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         payload = json.loads(msg.payload)
         topic = msg.topic.replace("/", "_")
     except json.JSONDecodeError:
-        LOG.warning('failed to parse as JSON: "%s"', msg.payload)
+        LOG.debug('failed to parse as JSON: "%s"', msg.payload)
         return
 
     # we except a dict from zigbee metrics in MQTT
@@ -43,7 +43,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         try:
             metric_value = float(value)
         except (ValueError, TypeError):
-            LOG.warning("Failed to convert %s: %s", metric, value)
+            LOG.debug("Failed to convert %s: %s", metric, value)
             continue
 
         # create metric if does not exist
