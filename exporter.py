@@ -32,6 +32,11 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         LOG.warning('failed to parse as JSON: "%s"', msg.payload)
         return
 
+    # we except a dict from zigbee metrics in MQTT
+    if not isinstance(payload, dict):
+        LOG.debug('unexpected payload format: "%s"', payload)
+        return
+
     topic_label = os.environ.get("TOPIC_LABEL", "topic")
     for metric, value in payload.items():
         # we only expose numeric values
