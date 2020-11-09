@@ -67,3 +67,18 @@ services:
 pip install -r requirements/base.txt
 MQTT_ADDRESS=192.168.0.1 python exporter.py
 ```
+
+#### Get the metrics on Prometheus
+
+See below an example to scrape the metrics and relabel the prefix zigbee_ to sensor_:
+
+```
+  - job_name: mqtt-exporter
+    static_configs:
+      - targets: ["mqtt-exporter:9000"]
+    metric_relabel_configs:
+      - source_labels: [sensor]
+        regex: 'zigbee2mqtt_(.*)'
+        replacement: '$1'
+        target_label: sensor
+```
