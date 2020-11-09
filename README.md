@@ -70,9 +70,10 @@ MQTT_ADDRESS=192.168.0.1 python exporter.py
 
 #### Get the metrics on Prometheus
 
-See below an example to scrape the metrics and relabel the prefix zigbee_ to sensor_:
+See below an example of Prometheus configuration to scrape the metrics and relabel the prefix zigbee_ to sensor_:
 
 ```
+scrape_configs:
   - job_name: mqtt-exporter
     static_configs:
       - targets: ["mqtt-exporter:9000"]
