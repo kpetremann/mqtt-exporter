@@ -50,7 +50,7 @@ With an interactive shell:
 docker run -it -p 9000:9000 -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
 ```
 
-If you need it to start on system boot (e.g. on your server/Raspberry Pi):
+If you need the container to start on system boot (e.g. on your server/Raspberry Pi):
 
 ```shell
 docker run -d -p 9000:9000 --restart unless-stopped --name mqtt-exporter  -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
