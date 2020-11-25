@@ -44,13 +44,13 @@ The list of parameters are:
 
 #### Using Docker
 
-with an interactive shell
+With an interactive shell:
 
 ```shell
 docker run -it -p 9000:9000 -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
 ```
 
-as a daemon so that it will be restarted after system reboot (e.g. on your raspberry PI)
+If you need it to start on system boot (e.g. on your server/Raspberry Pi):
 
 ```shell
 docker run -d -p 9000:9000 --restart unless-stopped --name mqtt-exporter  -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
@@ -67,6 +67,7 @@ services:
       - 9000:9000
     environment:
       - MQTT_ADDRESS=192.168.0.1
+    restart: unless-stopped
 ```
 
 #### Using Python
