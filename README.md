@@ -44,8 +44,16 @@ The list of parameters are:
 
 #### Using Docker
 
+with an interactive shell
+
 ```shell
 docker run -it -p 9000:9000 -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
+```
+
+as a daemon so that it will be restarted after system reboot (e.g. on your raspberry PI)
+
+```shell
+docker run -d -p 9000:9000 --restart unless-stopped --name mqtt-exporter  -e "MQTT_ADDRESS=192.168.0.1" kpetrem/mqtt-exporter
 ```
 
 #### Using Docker Compose
