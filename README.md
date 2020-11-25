@@ -13,7 +13,7 @@ Tested with Mosquitto MQTT and Xiaomi sensors.
 
 It exposes metrics from MQTT message out of the box (you just need to specify the target if not on localhost).
 
-MQTT-exporter expects a topic and a JSON payload.
+MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric values.
 
 ### Example
 ```
