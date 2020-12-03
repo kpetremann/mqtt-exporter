@@ -8,7 +8,7 @@ import signal
 import sys
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Gauge, Counter, start_http_server
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
@@ -16,11 +16,15 @@ PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
-
+prom_msg_counter = Counter(
+    f"{PREFIX}message_counter", "Counter of received messages", [os.environ.get("TOPIC_LABEL", "topic")]
+)
+LOG.info("creating counter for message count")
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
     """Subscribe to mqtt events (callback)."""
     client.subscribe("zigbee2mqtt/#")
+
 
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
@@ -52,11 +56,13 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
             prom_metrics[prom_metric_name] = Gauge(
                 prom_metric_name, "metric generated from MQTT message.", [topic_label]
             )
-            LOG.info("creating prometheus metric: %s", prom_metric_name)
+            LOG.info("creating prometheus metric: %s ", prom_metric_name)
 
         # expose the metric to prometheus
         prom_metrics[prom_metric_name].labels(**{topic_label: topic}).set(metric_value)
         LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    # Now inc a counter for the message count
+    prom_msg_counter.labels(**{topic_label: topic}).inc()
 
 
 def main():
