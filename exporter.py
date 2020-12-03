@@ -16,15 +16,16 @@ PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
+topic_label = os.environ.get("TOPIC_LABEL", "topic")
 prom_msg_counter = Counter(
-    f"{PREFIX}message_counter", "Counter of received messages", [os.environ.get("TOPIC_LABEL", "topic")]
+    f"{PREFIX}message_counter", "Counter of received messages", [topic_label]
 )
 LOG.info("creating counter for message count")
+
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
     """Subscribe to mqtt events (callback)."""
     client.subscribe("zigbee2mqtt/#")
-
 
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
@@ -41,7 +42,6 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         LOG.debug('unexpected payload format: "%s"', payload)
         return
 
-    topic_label = os.environ.get("TOPIC_LABEL", "topic")
     for metric, value in payload.items():
         # we only expose numeric values
         try:
