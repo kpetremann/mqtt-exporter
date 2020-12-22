@@ -17,9 +17,7 @@ TOPIC_LABEL = os.environ.get("TOPIC_LABEL", "topic")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
-prom_msg_counter = Counter(
-    f"{PREFIX}message_total", "Counter of received messages", [TOPIC_LABEL]
-)
+prom_msg_counter = Counter(f"{PREFIX}message_total", "Counter of received messages", [TOPIC_LABEL])
 
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
