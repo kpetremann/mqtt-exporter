@@ -8,14 +8,18 @@ import signal
 import sys
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Gauge, Counter, start_http_server
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
 PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
+TOPIC_LABEL = os.environ.get("TOPIC_LABEL", "topic")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
+prom_msg_counter = Counter(
+    f"{PREFIX}message_counter", "Counter of received messages", [TOPIC_LABEL]
+)
 
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
@@ -37,7 +41,6 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         LOG.debug('unexpected payload format: "%s"', payload)
         return
 
-    topic_label = os.environ.get("TOPIC_LABEL", "topic")
     for metric, value in payload.items():
         # we only expose numeric values
         try:
@@ -50,13 +53,15 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         prom_metric_name = f"{PREFIX}{metric}"
         if not prom_metrics.get(prom_metric_name):
             prom_metrics[prom_metric_name] = Gauge(
-                prom_metric_name, "metric generated from MQTT message.", [topic_label]
+                prom_metric_name, "metric generated from MQTT message.", [TOPIC_LABEL]
             )
             LOG.info("creating prometheus metric: %s", prom_metric_name)
 
         # expose the metric to prometheus
-        prom_metrics[prom_metric_name].labels(**{topic_label: topic}).set(metric_value)
+        prom_metrics[prom_metric_name].labels(**{TOPIC_LABEL: topic}).set(metric_value)
         LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    # Now inc a counter for the message count
+    prom_msg_counter.labels(**{TOPIC_LABEL: topic}).inc()
 
 
 def main():
