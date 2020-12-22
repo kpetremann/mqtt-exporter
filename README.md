@@ -15,7 +15,12 @@ It exposes metrics from MQTT message out of the box (you just need to specify th
 
 MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric values.
 
-### Example
+It also provides message counters for each MQTT topic (since PR #5):
+```
+sensor_message_total{instance="mqtt-exporter:9000", job="mqtt-exporter", topic="zigbee2mqtt_0x00157d00032b1234"} 10
+```
+
+### Metrics conversion example
 ```
 topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity":45.37}'
 ```
