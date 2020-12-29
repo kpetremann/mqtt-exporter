@@ -115,7 +115,7 @@ Result:
 sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
 
-And then remove `zigbee2mqtt_` prefix in `sensor` label in `prometheus.yml` file:
+And then remove `zigbee2mqtt_` prefix from `sensor` label via Prometheus configuration:
 
 ```
 scrape_configs:
