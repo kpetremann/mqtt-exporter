@@ -17,7 +17,7 @@ MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric
 
 It also provides message counters for each MQTT topic (since PR #5):
 ```
-sensor_message_total{instance="mqtt-exporter:9000", job="mqtt-exporter", topic="zigbee2mqtt_0x00157d00032b1234"} 10
+mqtt_message_total{instance="mqtt-exporter:9000", job="mqtt-exporter", topic="zigbee2mqtt_0x00157d00032b1234"} 10
 ```
 
 ### Metrics conversion example
@@ -26,8 +26,8 @@ topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity"
 ```
 will be converted as:
 ```
-temperature{topic="zigbee2mqtt_0x00157d00032b1234"} 25.24
-humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
+mqtt_temperature{topic="zigbee2mqtt_0x00157d00032b1234"} 25.24
+mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 ```
 
 ### Configuration
@@ -72,7 +72,14 @@ services:
       - 9000:9000
     environment:
       - MQTT_ADDRESS=192.168.0.1
+      - PROMETHEUS_PREFIX=sensor_
+      - TOPIC_LABEL=sensor
     restart: unless-stopped
+```
+
+This kind of configuration will produce metrics like this:
+```
+sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
 
 #### Using Python
@@ -84,7 +91,7 @@ MQTT_ADDRESS=192.168.0.1 python exporter.py
 
 #### Get the metrics on Prometheus
 
-See below an example of Prometheus configuration to scrape the metrics and relabel the prefix zigbee_ to sensor_:
+See below an example of Prometheus configuration to scrape the metrics and remove the prefix zigbee2mqtt_:
 
 ```
 scrape_configs:
@@ -96,4 +103,14 @@ scrape_configs:
         regex: 'zigbee2mqtt_(.*)'
         replacement: '$1'
         target_label: sensor
+```
+
+Resulting metrics:
+```
+sensor_temperature{sensor=bedroom"} 22.3
+```
+
+Instead of:
+```
+sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
