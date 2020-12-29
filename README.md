@@ -95,7 +95,7 @@ scrape_configs:
 
 #### Nicer metrics
 
-If you want nicer metrics, you can configure mqtt-exporter in your docker-compose.yaml as followed:
+If you want nicer metrics, you can configure mqtt-exporter in your `docker-compose.yml` as followed:
 ```
 version: "3"
 services:
@@ -115,7 +115,7 @@ Result:
 sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
 
-And then remove "zigbee2mqtt_" prefix in "sensor" label in prometheus.yml configuration:
+And then remove `zigbee2mqtt_` prefix in `sensor` label in `prometheus.yml` file:
 
 ```
 scrape_configs:
