@@ -72,14 +72,7 @@ services:
       - 9000:9000
     environment:
       - MQTT_ADDRESS=192.168.0.1
-      - PROMETHEUS_PREFIX=sensor_
-      - TOPIC_LABEL=sensor
     restart: unless-stopped
-```
-
-This kind of configuration will produce metrics like this:
-```
-sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
 
 #### Using Python
@@ -91,7 +84,38 @@ MQTT_ADDRESS=192.168.0.1 python exporter.py
 
 #### Get the metrics on Prometheus
 
-See below an example of Prometheus configuration to scrape the metrics and remove the prefix zigbee2mqtt_:
+See below an example of Prometheus configuration to scrape the metrics:
+
+```
+scrape_configs:
+  - job_name: mqtt-exporter
+    static_configs:
+      - targets: ["mqtt-exporter:9000"]
+```
+
+#### Nicer metrics
+
+If you want nicer metrics, you can configure mqtt-exporter in your docker-compose.yaml as followed:
+```
+version: "3"
+services:
+  mqtt-exporter:
+    image: kpetrem/mqtt-exporter
+    ports:
+      - 9000:9000
+    environment:
+      - MQTT_ADDRESS=192.168.0.1
+      - PROMETHEUS_PREFIX=sensor_
+      - TOPIC_LABEL=sensor
+    restart: unless-stopped
+```
+
+Result:
+```
+sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
+```
+
+And then remove "zigbee2mqtt_" prefix in "sensor" label in prometheus.yml configuration:
 
 ```
 scrape_configs:
@@ -105,12 +129,7 @@ scrape_configs:
         target_label: sensor
 ```
 
-Resulting metrics:
+Result:
 ```
 sensor_temperature{sensor=bedroom"} 22.3
-```
-
-Instead of:
-```
-sensor_temperature{sensor="zigbee2mqtt_bedroom"} 22.3
 ```
