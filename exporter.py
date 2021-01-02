@@ -14,6 +14,7 @@ logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
 PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
 TOPIC_LABEL = os.environ.get("TOPIC_LABEL", "topic")
+TOPIC = os.environ.get("MQTT_TOPIC", "#")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
@@ -22,7 +23,8 @@ prom_msg_counter = Counter(f"{PREFIX}message_total", "Counter of received messag
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
     """Subscribe to mqtt events (callback)."""
-    client.subscribe("zigbee2mqtt/#")
+    LOG.info('listening to %s', TOPIC)
+    client.subscribe(TOPIC)
 
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613

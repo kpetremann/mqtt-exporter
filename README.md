@@ -38,6 +38,7 @@ The list of parameters are:
 -   `LOG_LEVEL`: Logging level (default: INFO)
 -   `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
 -   `MQTT_PORT`: TCP port of MQTT broker (default: 1883)
+-   `MQTT_TOPIC`: Topic path to subscribe to (default: #)
 -   `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
 -   `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
 -   `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
