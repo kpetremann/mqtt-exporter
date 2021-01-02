@@ -23,7 +23,7 @@ prom_msg_counter = Counter(f"{PREFIX}message_total", "Counter of received messag
 
 def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
     """Subscribe to mqtt events (callback)."""
-    LOG.info('listening to %s', TOPIC)
+    LOG.info('listening to "%s"', TOPIC)
     client.subscribe(TOPIC)
 
 
