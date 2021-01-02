@@ -85,13 +85,14 @@ def main():
 
     # get parameters from environment
     mqtt_address = os.environ.get("MQTT_ADDRESS", "127.0.0.1")
-    mqtt_port = os.environ.get("MQTT_PORT", 1883)
-    mqtt_keepalive = os.environ.get("MQTT_KEEPALIVE", 60)
+    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
+    mqtt_keepalive = int(os.environ.get("MQTT_KEEPALIVE", "60"))
     mqtt_username = os.environ.get("MQTT_USERNAME")
     mqtt_password = os.environ.get("MQTT_PASSWORD")
+    prom_port = int(os.environ.get("PROMETHEUS_PORT", "9000"))
 
     # start prometheus server
-    start_http_server(os.environ.get("PROMETHEUS_PORT", 9000))
+    start_http_server(prom_port)
 
     # define mqtt client
     client.on_connect = subscribe
@@ -100,7 +101,7 @@ def main():
     # start the connection and the loop
     if mqtt_username and mqtt_password:
         client.username_pw_set(mqtt_username, mqtt_password)
-    client.connect(mqtt_address, int(mqtt_port), mqtt_keepalive)
+    client.connect(mqtt_address, mqtt_port, mqtt_keepalive)
     client.loop_forever()
 
 
