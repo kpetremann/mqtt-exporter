@@ -4,6 +4,8 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+![Build and publish docker images](https://github.com/kpetremann/mqtt-exporter/workflows/Build%20and%20publish%20docker%20images%20(all%20platforms)/badge.svg)
+
 # MQTT-exporter
 
 ## Description
