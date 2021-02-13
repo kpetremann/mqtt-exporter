@@ -43,7 +43,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         LOG.debug('encountered undecodable payload: "%s"', msg.payload)
         return
 
-    # we except a dict from zigbee metrics in MQTT
+    # we expect a dict from zigbee metrics in MQTT
     if not isinstance(payload, dict):
         LOG.debug('unexpected payload format: "%s"', payload)
         return
@@ -67,7 +67,8 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         # expose the metric to prometheus
         prom_metrics[prom_metric_name].labels(**{TOPIC_LABEL: topic}).set(metric_value)
         LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
-    # Now inc a counter for the message count
+
+    # increment received message counter
     prom_msg_counter.labels(**{TOPIC_LABEL: topic}).inc()
 
 
