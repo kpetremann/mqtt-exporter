@@ -10,11 +10,11 @@ import sys
 import paho.mqtt.client as mqtt
 from prometheus_client import Counter, Gauge, start_http_server
 
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
-PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
-TOPIC_LABEL = os.environ.get("TOPIC_LABEL", "topic")
-TOPIC = os.environ.get("MQTT_TOPIC", "#")
+PREFIX = os.getenv("PROMETHEUS_PREFIX", "mqtt_")
+TOPIC_LABEL = os.getenv("TOPIC_LABEL", "topic")
+TOPIC = os.getenv("MQTT_TOPIC", "#")
 IGNORED_TOPICS = os.getenv("MQTT_IGNORED_TOPICS", "").split(",")
 
 # global variable
@@ -91,12 +91,12 @@ def main():
     signal.signal(signal.SIGINT, stop_request)
 
     # get parameters from environment
-    mqtt_address = os.environ.get("MQTT_ADDRESS", "127.0.0.1")
-    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
-    mqtt_keepalive = int(os.environ.get("MQTT_KEEPALIVE", "60"))
-    mqtt_username = os.environ.get("MQTT_USERNAME")
-    mqtt_password = os.environ.get("MQTT_PASSWORD")
-    prom_port = int(os.environ.get("PROMETHEUS_PORT", "9000"))
+    mqtt_address = os.getenv("MQTT_ADDRESS", "127.0.0.1")
+    mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
+    mqtt_keepalive = int(os.getenv("MQTT_KEEPALIVE", "60"))
+    mqtt_username = os.getenv("MQTT_USERNAME")
+    mqtt_password = os.getenv("MQTT_PASSWORD")
+    prom_port = int(os.getenv("PROMETHEUS_PORT", "9000"))
 
     # start prometheus server
     start_http_server(prom_port)
