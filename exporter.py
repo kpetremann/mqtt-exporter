@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import sys
+import re
 
 import paho.mqtt.client as mqtt
 from prometheus_client import Gauge, Counter, start_http_server
@@ -15,6 +16,7 @@ LOG = logging.getLogger("mqtt-exporter")
 PREFIX = os.environ.get("PROMETHEUS_PREFIX", "mqtt_")
 TOPIC_LABEL = os.environ.get("TOPIC_LABEL", "topic")
 TOPIC = os.environ.get("MQTT_TOPIC", "#")
+IGNORED_TOPIC = os.environ.get("MQTT_IGNORED_TOPIC", "map_data")
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
@@ -29,6 +31,10 @@ def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     """Expose metrics to prometheus when a message has been published (callback)."""
+    if re.search(IGNORED_TOPIC, msg.topic):
+        LOG.debug('Topic "%s" was ignored', msg.topic)
+        return
+
     try:
         payload = json.loads(msg.payload)
         topic = msg.topic.replace("/", "_")
