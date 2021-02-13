@@ -9,3 +9,4 @@ python:
 script:
   - pylama .
   - black . --check --diff
+  - isort . --check --diff

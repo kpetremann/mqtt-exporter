@@ -8,7 +8,7 @@ import signal
 import sys
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Gauge, Counter, start_http_server
+from prometheus_client import Counter, Gauge, start_http_server
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 LOG = logging.getLogger("mqtt-exporter")
