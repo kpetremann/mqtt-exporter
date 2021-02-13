@@ -35,6 +35,9 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     except json.JSONDecodeError:
         LOG.debug('failed to parse as JSON: "%s"', msg.payload)
         return
+    except UnicodeDecodeError:
+        LOG.debug('encountered undecodable payload: "%s"', msg.payload)
+        return
 
     # we except a dict from zigbee metrics in MQTT
     if not isinstance(payload, dict):
