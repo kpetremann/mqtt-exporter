@@ -30,7 +30,7 @@ def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     """Expose metrics to prometheus when a message has been published (callback)."""
-    if msg.topic not in IGNORED_TOPICS:
+    if msg.topic in IGNORED_TOPICS:
         LOG.debug('Topic "%s" was ignored', msg.topic)
         return
     try:
