@@ -51,7 +51,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         if not isinstance(value, (int, float, str, bytes)):
             continue  # Value is not parsable
         # we only expose numeric values and ON/OFF as 1/0
-        state_values = {"ON": 0, "OFF": 1}
+        state_values = {"ON": 1, "OFF": 0}
         if str(value).upper() in state_values:
             metric_value = state_values[str(value).upper()]
         else:
