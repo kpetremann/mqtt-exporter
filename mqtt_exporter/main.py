@@ -27,6 +27,29 @@ def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0
     client.subscribe(settings.TOPIC)
 
 
+def parse_metrics(data):
+    """Attempt to parse the value and extract a number out of it.
+
+    Note that `data` is untrusted input at this point.
+
+    Raise ValueError is the data can't be parsed.
+    """
+    if isinstance(data, (int, float)):
+        return data
+    if isinstance(data, bytes):
+        data = data.decode()
+    if isinstance(data, str):
+        data = data.upper()
+        # Handling of switch data where their state is reported as ON/OFF
+        state_values = {"ON": 1, "OFF": 0}
+        if data in state_values:
+            return state_values[data]
+        # Last ditch effort, we got a string, let's try to cast it
+        return float(data)
+    # We were not able to extract anything, let's bubble it up.
+    raise ValueError(f"Can't parse '{data}' to a number.")
+
+
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     """Expose metrics to prometheus when a message has been published (callback)."""
     if msg.topic in settings.IGNORED_TOPICS:
@@ -48,18 +71,11 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
         return
 
     for metric, value in payload.items():
-        if not isinstance(value, (int, float, str, bytes)):
-            continue  # Value is not parsable
-        # we only expose numeric values and ON/OFF as 1/0
-        state_values = {"ON": 1, "OFF": 0}
-        if str(value).upper() in state_values:
-            metric_value = state_values[str(value).upper()]
-        else:
-            try:
-                metric_value = float(value)
-            except (ValueError, TypeError):
-                LOG.debug("Failed to convert %s: %s", metric, value)
-                continue
+        try:
+            metric_value = parse_metrics(value)
+        except ValueError as err:
+            LOG.debug("Failed to convert %s: %s", metric, err)
+            continue
 
         # create metric if does not exist
         prom_metric_name = f"{settings.PREFIX}{metric}"
