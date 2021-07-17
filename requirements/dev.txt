@@ -4,3 +4,4 @@ isort
 pylama
 pdbpp
 pylint
+pre-commit
