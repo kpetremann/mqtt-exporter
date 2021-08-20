@@ -14,6 +14,11 @@ from mqtt_exporter import settings
 logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
+STATE_VALUES = {
+  "ON": 1,
+  "OFF": 0,
+}
+
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
 prom_msg_counter = Counter(
@@ -41,9 +46,8 @@ def parse_metrics(data):
     if isinstance(data, str):
         data = data.upper()
         # Handling of switch data where their state is reported as ON/OFF
-        state_values = {"ON": 1, "OFF": 0}
-        if data in state_values:
-            return state_values[data]
+        if data in STATE_VALUES:
+            return STATE_VALUES[data]
         # Last ditch effort, we got a string, let's try to cast it
         return float(data)
     # We were not able to extract anything, let's bubble it up.
