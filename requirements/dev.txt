@@ -1,7 +1,8 @@
 -r base.txt
 black
+invoke
 isort
-pylama
 pdbpp
-pylint
 pre-commit
+pylama
+pylint
