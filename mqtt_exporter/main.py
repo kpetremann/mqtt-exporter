@@ -15,8 +15,8 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
 STATE_VALUES = {
-  "ON": 1,
-  "OFF": 0,
+    "ON": 1,
+    "OFF": 0,
 }
 
 # global variable
