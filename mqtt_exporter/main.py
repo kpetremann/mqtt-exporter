@@ -17,6 +17,8 @@ LOG = logging.getLogger("mqtt-exporter")
 STATE_VALUES = {
     "ON": 1,
     "OFF": 0,
+    "TRUE": 1,
+    "FALSE": 0,
 }
 
 # global variable
