@@ -35,10 +35,9 @@ topic '<prefix>/<name>/sensor/temperature' '20.00'
 ```
 
 The exporter is tested with:
-* Aqara/Xiaomi sensors (WSDCGQ11LM and VOCKQJK11LM)
-* SONOFF sensors (SNZB-02)
-* Shelly sensors (H&T wifi)
-
+  * Aqara/Xiaomi sensors (WSDCGQ11LM and VOCKQJK11LM)
+  * SONOFF sensors (SNZB-02)
+  * Shelly sensors (H&T wifi)
 
 ### Metrics conversion example
 ```
@@ -55,17 +54,17 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 Parameters are passed using environment variables.
 
 The list of parameters are:
--   `IGNORED_TOPICS`: Comma-separated lists of topics to ignore (default: None)
--   `LOG_LEVEL`: Logging level (default: INFO)
--   `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
--   `MQTT_PORT`: TCP port of MQTT broker (default: 1883)
--   `MQTT_TOPIC`: Topic path to subscribe to (default: #)
--   `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
--   `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
--   `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
--   `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
--   `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
--   `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
+  * `IGNORED_TOPICS`: Comma-separated lists of topics to ignore (default: None)
+  * `LOG_LEVEL`: Logging level (default: INFO)
+  * `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
+  * `MQTT_PORT`: TCP port of MQTT broker (default: 1883)
+  * `MQTT_TOPIC`: Topic path to subscribe to (default: #)
+  * `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
+  * `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
+  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
+  * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
+  * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
+  * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
 
 ### Deployment
 
@@ -162,19 +161,19 @@ sensor_temperature{sensor=bedroom"} 22.3
 
 You can install invoke package on your system and then use it to install environement, run an autoformat or just run the exporter:
 
-* `invoke install`: to install virtualenv under .venv/ and install all dev requirements
-* `invoke reformat`: reformat using black and isort
-* `invoke start`: start the app
+  * `invoke install`: to install virtualenv under .venv/ and install all dev requirements
+  * `invoke reformat`: reformat using black and isort
+  * `invoke start`: start the app
 
 ### Coding style
 
 Please ensure you have run the following before pushing a commit:
-* `black` and `isort` (or `invoke reformat`)
-* `pylama` to run all linters
+  * `black` and `isort` (or `invoke reformat`)
+  * `pylama` to run all linters
 
 Follow usual best practices:
-* document your code (inline and docstrings)
-* constant are in upper case
-* use comprehensible variable name
-* one function = one purpose
-* function name should define perfectly its purpose
+  * document your code (inline and docstrings)
+  * constant are in upper case
+  * use comprehensible variable name
+  * one function = one purpose
+  * function name should define perfectly its purpose
