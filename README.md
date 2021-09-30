@@ -22,6 +22,24 @@ It also provides message counters for each MQTT topic (since PR #5):
 mqtt_message_total{instance="mqtt-exporter:9000", job="mqtt-exporter", topic="zigbee2mqtt_0x00157d00032b1234"} 10
 ```
 
+### Tested devices
+
+Note: This exporter aims to be as generic as possible. If the sensor you use is using the following format, it will work:
+```
+topic '<prefix>/<name>', payload '{"temperature":26.24,"humidity":45.37}'
+```
+
+Also, the Shelly format is supported:
+```
+topic '<prefix>/<name>/sensor/temperature' '20.00'
+```
+
+The exporter is tested with:
+* Aqara/Xiaomi sensors (WSDCGQ11LM and VOCKQJK11LM)
+* SONOFF sensors (SNZB-02)
+* Shelly sensors (H&T wifi)
+
+
 ### Metrics conversion example
 ```
 topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity":45.37}'

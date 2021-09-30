@@ -34,7 +34,7 @@ def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0
     client.subscribe(settings.TOPIC)
 
 
-def parse_metrics(data):
+def _parse_metrics(data):
     """Attempt to parse the value and extract a number out of it.
 
     Note that `data` is untrusted input at this point.
@@ -43,17 +43,67 @@ def parse_metrics(data):
     """
     if isinstance(data, (int, float)):
         return data
+
     if isinstance(data, bytes):
         data = data.decode()
+
     if isinstance(data, str):
         data = data.upper()
+
         # Handling of switch data where their state is reported as ON/OFF
         if data in STATE_VALUES:
             return STATE_VALUES[data]
+
         # Last ditch effort, we got a string, let's try to cast it
         return float(data)
+
     # We were not able to extract anything, let's bubble it up.
     raise ValueError(f"Can't parse '{data}' to a number.")
+
+
+def _normalize_shelly_msg(topic, payload):
+    """Normalize message from Shelly sensors to classic topic payload format.
+
+    Shelly integrated topic and payload differently:
+    * topic: shellies/room/sensor/temperature
+    * payload: 20.00
+    """
+    info = topic.split("/")
+    try:
+        topic = f"{info[0]}/{info[1]}"
+        payload_dict = {
+            info[-1]: payload.decode()
+        }  # usutally the last element is the type of sensor
+        payload = json.dumps(payload_dict)
+    except IndexError:
+        pass
+
+    return topic, payload
+
+
+def _parse_message(topic, payload):
+    """Parse topic and payload to have exposable information."""
+    # Shelly sensors support
+    if "shellies" in topic:
+        topic, payload = _normalize_shelly_msg(topic, payload)
+
+    # parse MQTT topic and payload
+    try:
+        payload = json.loads(payload)
+        topic = topic.replace("/", "_")
+    except json.JSONDecodeError:
+        LOG.debug('failed to parse as JSON: "%s"', payload)
+        return None, None
+    except UnicodeDecodeError:
+        LOG.debug('encountered undecodable payload: "%s"', payload)
+        return None, None
+
+    # handle payload having single values and
+    if not isinstance(payload, dict):
+        LOG.debug('unexpected payload format: "%s"', payload)
+        return None, None
+
+    return topic, payload
 
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
@@ -61,24 +111,15 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     if msg.topic in settings.IGNORED_TOPICS:
         LOG.debug('Topic "%s" was ignored', msg.topic)
         return
-    try:
-        payload = json.loads(msg.payload)
-        topic = msg.topic.replace("/", "_")
-    except json.JSONDecodeError:
-        LOG.debug('failed to parse as JSON: "%s"', msg.payload)
-        return
-    except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', msg.payload)
-        return
 
-    # we expect a dict from zigbee metrics in MQTT
-    if not isinstance(payload, dict):
-        LOG.debug('unexpected payload format: "%s"', payload)
+    topic, payload = _parse_message(msg.topic, msg.payload)
+
+    if not topic or not payload:
         return
 
     for metric, value in payload.items():
         try:
-            metric_value = parse_metrics(value)
+            metric_value = _parse_metrics(value)
         except ValueError as err:
             LOG.debug("Failed to convert %s: %s", metric, err)
             continue
