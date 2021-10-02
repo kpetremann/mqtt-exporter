@@ -3,6 +3,7 @@
 
 import json
 import logging
+import re
 import signal
 import sys
 
@@ -34,7 +35,39 @@ def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0
     client.subscribe(settings.TOPIC)
 
 
-def _parse_metrics(data):
+def _parse_metrics(data, topic, prefix=""):
+    """Attempt to parse a set of metrics.
+
+    Note when `data` contains nested metrics this function will be called recursivley.
+    """
+    for metric, value in data.items():
+        # when value is a dict recursivley call _parse_metrics to handle these messages
+        if isinstance(value, dict):
+            LOG.debug("parsing dict %s: %s", metric, value)
+            _parse_metrics(value, topic, f"{prefix}{metric}_")
+            continue
+
+        try:
+            metric_value = _parse_metric(value)
+        except ValueError as err:
+            LOG.debug("Failed to convert %s: %s", metric, err)
+            continue
+
+        # create metric if does not exist
+        prom_metric_name = f"{settings.PREFIX}{prefix}{metric}".replace(".", "").replace(" ", "_")
+        prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
+        if not prom_metrics.get(prom_metric_name):
+            prom_metrics[prom_metric_name] = Gauge(
+                prom_metric_name, "metric generated from MQTT message.", [settings.TOPIC_LABEL]
+            )
+            LOG.info("creating prometheus metric: %s", prom_metric_name)
+
+        # expose the metric to prometheus
+        prom_metrics[prom_metric_name].labels(**{settings.TOPIC_LABEL: topic}).set(metric_value)
+        LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+
+
+def _parse_metric(data):
     """Attempt to parse the value and extract a number out of it.
 
     Note that `data` is untrusted input at this point.
@@ -117,24 +150,7 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     if not topic or not payload:
         return
 
-    for metric, value in payload.items():
-        try:
-            metric_value = _parse_metrics(value)
-        except ValueError as err:
-            LOG.debug("Failed to convert %s: %s", metric, err)
-            continue
-
-        # create metric if does not exist
-        prom_metric_name = f"{settings.PREFIX}{metric}"
-        if not prom_metrics.get(prom_metric_name):
-            prom_metrics[prom_metric_name] = Gauge(
-                prom_metric_name, "metric generated from MQTT message.", [settings.TOPIC_LABEL]
-            )
-            LOG.info("creating prometheus metric: %s", prom_metric_name)
-
-        # expose the metric to prometheus
-        prom_metrics[prom_metric_name].labels(**{settings.TOPIC_LABEL: topic}).set(metric_value)
-        LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    _parse_metrics(payload, topic)
 
     # increment received message counter
     prom_msg_counter.labels(**{settings.TOPIC_LABEL: topic}).inc()
