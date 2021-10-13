@@ -103,7 +103,10 @@ def _normalize_shelly_msg(topic, payload):
     """
     info = topic.split("/")
     try:
-        topic = f"{info[0]}/{info[1]}"
+        topic = f"{info[0]}/{'_'.join(info[1:-1])}"
+        if info[-1] in ['0', '1']:
+            topic = f'{topic}_{info[-1]}'
+            info[-1] = 'state'
         payload_dict = {
             info[-1]: payload.decode()
         }  # usutally the last element is the type of sensor
@@ -134,6 +137,9 @@ def _parse_message(topic, payload):
     # handle payload having single values and
     if not isinstance(payload, dict):
         LOG.debug('unexpected payload format: "%s"', payload)
+        return None, None
+
+    if 'bridge_info' in topic:
         return None, None
 
     return topic, payload
