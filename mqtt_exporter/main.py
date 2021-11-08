@@ -127,6 +127,7 @@ def _parse_message(raw_topic, raw_payload):
         payload = json.loads(raw_payload)
     except json.JSONDecodeError:
         LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
+        return None, None
     except UnicodeDecodeError:
         LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
@@ -145,7 +146,7 @@ def _parse_message(raw_topic, raw_payload):
 
     # handle not converted payload
     if not isinstance(payload, dict):
-        LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, raw_payload)
+        LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, payload)
         return None, None
 
     return topic, payload
