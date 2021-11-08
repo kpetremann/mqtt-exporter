@@ -24,4 +24,18 @@ def test__parse_message__shelly_style():
     parsed_topic, parsed_payload = _parse_message(topic, payload)
 
     assert parsed_topic == "shellies_room"
-    assert parsed_payload == {"temperature": "20.00"}
+    assert parsed_payload == {"temperature": 20.00}
+
+
+def test__parse_message__tasmota_style():
+    """Test message parsing for tasmota default style.
+
+    This is similar to Shelly's style.
+    """
+    topic = "dht/livingroom/TEMPERATURE"
+    payload = "20.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "dht_livingroom"
+    assert parsed_payload == {"TEMPERATURE": 20.0}
