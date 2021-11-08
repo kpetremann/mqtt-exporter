@@ -39,3 +39,40 @@ def test__parse_message__tasmota_style():
 
     assert parsed_topic == "dht_livingroom"
     assert parsed_payload == {"TEMPERATURE": 20.0}
+
+
+def test_parse_message__nested():
+    """Test message parsing when nested payload."""
+    topic = "sensor/room"
+    payload = '{ \
+        "Time": "2021-10-03T11:05:21", \
+        "ENERGY": { \
+            "Total": 152.657, \
+            "Yesterday": 1.758, \
+            "Today": 0.178, \
+            "Power": 143, \
+            "ApparentPower": 184, \
+            "ReactivePower": 117, \
+            "Factor": 0.77, \
+            "Voltage": 235, \
+            "Current": 0.784 \
+        } \
+    }'
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "sensor_room"
+    assert parsed_payload == {
+        "Time": "2021-10-03T11:05:21",
+        "ENERGY": {
+            "Total": 152.657,
+            "Yesterday": 1.758,
+            "Today": 0.178,
+            "Power": 143,
+            "ApparentPower": 184,
+            "ReactivePower": 117,
+            "Factor": 0.77,
+            "Voltage": 235,
+            "Current": 0.784,
+        },
+    }
