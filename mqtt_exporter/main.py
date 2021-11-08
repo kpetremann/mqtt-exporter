@@ -120,30 +120,32 @@ def _normalize_name_in_topic_msg(topic, payload):
     return topic, payload_dict
 
 
-def _parse_message(topic, payload):
+def _parse_message(raw_topic, raw_payload):
     """Parse topic and payload to have exposable information."""
     # parse MQTT payload
     try:
-        payload = json.loads(payload)
+        payload = json.loads(raw_payload)
     except json.JSONDecodeError:
-        LOG.debug('failed to parse as JSON: "%s"', payload)
+        LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
     except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', payload)
+        LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
 
     if not isinstance(payload, dict):
-        topic, payload = _normalize_name_in_topic_msg(topic, payload)
+        topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
+    else:
+        topic = raw_topic
 
     # parse MQTT payload
     try:
         topic = topic.replace("/", "_")
     except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', payload)
+        LOG.debug('encountered undecodable topic: "%s"', raw_topic)
         return None, None
 
     # handle not converted payload
     if not isinstance(payload, dict):
-        LOG.debug('unexpected payload format: "%s"', payload)
+        LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, raw_payload)
         return None, None
 
     return topic, payload
