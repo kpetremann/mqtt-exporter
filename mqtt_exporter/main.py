@@ -94,46 +94,59 @@ def _parse_metric(data):
     raise ValueError(f"Can't parse '{data}' to a number.")
 
 
-def _normalize_shelly_msg(topic, payload):
-    """Normalize message from Shelly sensors to classic topic payload format.
+def _normalize_name_in_topic_msg(topic, payload):
+    """Normalize message to classic topic payload format.
 
-    Shelly integrated topic and payload differently:
+    Used when payload is containing only the value, and the sensor metric name is in the topic.
+
+    Used for:
+    - Shelly sensors
+    - Custom integration with single value
+
+    Warning: only support when the last item in the topic is the actual metric name
+
+    Example:
+    Shelly integrated topic and payload differently than usually (Aqara)
     * topic: shellies/room/sensor/temperature
     * payload: 20.00
     """
     info = topic.split("/")
     try:
-        topic = f"{info[0]}/{info[1]}"
-        payload_dict = {
-            info[-1]: payload.decode()
-        }  # usutally the last element is the type of sensor
-        payload = json.dumps(payload_dict)
+        topic = f"{info[0]}/{info[1]}".lower()
+        payload_dict = {info[-1]: payload}  # usually the last element is the type of sensor
     except IndexError:
         pass
 
-    return topic, payload
+    return topic, payload_dict
 
 
-def _parse_message(topic, payload):
+def _parse_message(raw_topic, raw_payload):
     """Parse topic and payload to have exposable information."""
-    # Shelly sensors support
-    if "shellies" in topic:
-        topic, payload = _normalize_shelly_msg(topic, payload)
-
-    # parse MQTT topic and payload
+    # parse MQTT payload
     try:
-        payload = json.loads(payload)
-        topic = topic.replace("/", "_")
+        payload = json.loads(raw_payload)
     except json.JSONDecodeError:
-        LOG.debug('failed to parse as JSON: "%s"', payload)
+        LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
         return None, None
     except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', payload)
+        LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
 
-    # handle payload having single values and
     if not isinstance(payload, dict):
-        LOG.debug('unexpected payload format: "%s"', payload)
+        topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
+    else:
+        topic = raw_topic
+
+    # parse MQTT payload
+    try:
+        topic = topic.replace("/", "_")
+    except UnicodeDecodeError:
+        LOG.debug('encountered undecodable topic: "%s"', raw_topic)
+        return None, None
+
+    # handle not converted payload
+    if not isinstance(payload, dict):
+        LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, payload)
         return None, None
 
     return topic, payload

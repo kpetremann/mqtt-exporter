@@ -27,3 +27,13 @@ def start(cmd):
     """Start the app."""
     with cmd.prefix(f"source {PATH}/.venv/bin/activate"):
         cmd.run(f"python {PATH}/exporter.py")
+
+
+@task
+def test(cmd):
+    """Run tests."""
+    with cmd.prefix(f"source {PATH}/.venv/bin/activate"):
+        cmd.run(f"pytest {PATH}/tests/")
+        cmd.run(f"pylama {PATH}")
+        cmd.run(f"black {PATH} --check")
+        cmd.run(f"isort {PATH} --check")

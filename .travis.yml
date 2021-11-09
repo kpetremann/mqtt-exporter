@@ -8,5 +8,6 @@ python:
   - "3.9"
 script:
   - pylama .
+  - pytest tests/
   - black . --check --diff
   - isort . --check --diff
