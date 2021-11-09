@@ -27,8 +27,8 @@ def test__parse_message__shelly_style():
     assert parsed_payload == {"temperature": 20.00}
 
 
-def test__parse_message__tasmota_style():
-    """Test message parsing for tasmota default style.
+def test__parse_message__generic_single_value_style():
+    """Test message parsing when payload is a single value (same as Shelly but more custom).
 
     This is similar to Shelly's style.
     """

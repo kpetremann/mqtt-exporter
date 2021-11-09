@@ -101,7 +101,7 @@ def _normalize_name_in_topic_msg(topic, payload):
 
     Used for:
     - Shelly sensors
-    - Tasmota messages
+    - Custom integration with single value
 
     Warning: only support when the last item in the topic is the actual metric name
 
