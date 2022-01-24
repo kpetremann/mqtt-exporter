@@ -54,8 +54,8 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 Parameters are passed using environment variables.
 
 The list of parameters are:
-  * `IGNORED_TOPICS`: Comma-separated lists of topics to ignore (default: None)
   * `LOG_LEVEL`: Logging level (default: INFO)
+  * `MQTT_IGNORED_TOPICS`: Comma-separated lists of topics to ignore. Accepts wildcards. (default: None)
   * `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
   * `MQTT_PORT`: TCP port of MQTT broker (default: 1883)
   * `MQTT_TOPIC`: Topic path to subscribe to (default: #)

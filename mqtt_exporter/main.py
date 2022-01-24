@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """MQTT exporter."""
 
+import fnmatch
 import json
 import logging
 import re
@@ -154,9 +155,10 @@ def _parse_message(raw_topic, raw_payload):
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     """Expose metrics to prometheus when a message has been published (callback)."""
-    if msg.topic in settings.IGNORED_TOPICS:
-        LOG.debug('Topic "%s" was ignored', msg.topic)
-        return
+    for ignore in settings.IGNORED_TOPICS:
+        if fnmatch.fnmatch(msg.topic, ignore):
+            LOG.debug('Topic "%s" was ignored by entry "%s"', msg.topic, ignore)
+            return
 
     topic, payload = _parse_message(msg.topic, msg.payload)
 
