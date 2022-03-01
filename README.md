@@ -49,6 +49,29 @@ mqtt_temperature{topic="zigbee2mqtt_0x00157d00032b1234"} 25.24
 mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 ```
 
+### Zigbee2MQTT device availability support
+
+**Note: Supports only non-legacy mode** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-advanced-configuration)
+
+When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
+
+```
+mqtt_state{topic="zigbee2mqtt_garage_availability"} 1.0
+mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
+```
+
+To avoid having different topic for the same device, the exporter has a normalization feature disabled by default.
+It can be enabled by setting ZIGBEE2MQTT_AVAILABILITY varenv to "True".
+
+I will remove the suffix from the topic, and change the metric name accordingly:
+
+```
+mqtt_zigbee_availability{topic="zigbee2mqtt_garage"} 1.0
+mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
+```
+
+Note: the metric name mqtt_state  is not kept to reduce collision risks as it is too common.
+
 ### Configuration
 
 Parameters are passed using environment variables.
@@ -65,6 +88,7 @@ The list of parameters are:
   * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
   * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
+  * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
 
 ### Deployment
 

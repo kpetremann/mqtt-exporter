@@ -6,6 +6,7 @@ TOPIC_LABEL = os.getenv("TOPIC_LABEL", "topic")
 TOPIC = os.getenv("MQTT_TOPIC", "#")
 IGNORED_TOPICS = os.getenv("MQTT_IGNORED_TOPICS", "").split(",")
 
+ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 MQTT_ADDRESS = os.getenv("MQTT_ADDRESS", "127.0.0.1")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))

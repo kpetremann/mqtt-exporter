@@ -16,11 +16,14 @@ from mqtt_exporter import settings
 logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
+ZIGBEE2MQTT_AVAILABILITY_SUFFIX = "/availability"
 STATE_VALUES = {
     "ON": 1,
     "OFF": 0,
     "TRUE": 1,
     "FALSE": 0,
+    "ONLINE": 1,
+    "OFFLINE": 0,
 }
 
 # global variable
@@ -138,7 +141,18 @@ def _parse_message(raw_topic, raw_payload):
     else:
         topic = raw_topic
 
-    # parse MQTT payload
+    # handle device availability (only support non-legacy mode)
+    if settings.ZIGBEE2MQTT_AVAILABILITY:
+        if topic.endswith(ZIGBEE2MQTT_AVAILABILITY_SUFFIX) and "state" in payload:
+            # move availability suffix added by Zigbee2MQTT from topic to payload
+            # the goal is to have this kind of metric:
+            #   mqtt_zigbee_availability{sensor="zigbee2mqtt_garage"} = 1.0
+            topic = topic[: -len(ZIGBEE2MQTT_AVAILABILITY_SUFFIX)]
+            payload = {"zigbee_availability": payload["state"]}
+
+    # parse MQTT topic
+
+    # handle nested topic
     try:
         topic = topic.replace("/", "_")
     except UnicodeDecodeError:
