@@ -43,8 +43,8 @@ else:
 
 def subscribe(client, _, __, result_code, *args):
     """Subscribe to mqtt events (callback)."""
-    user_data = {"client_id": ""}
-    if args:
+    user_data = {"client_id": settings.MQTT_CLIENT_ID}
+    if not settings.MQTT_CLIENT_ID and args:
         user_data["client_id"] = args[0].AssignedClientIdentifier
 
     client.user_data_set(user_data)
@@ -224,10 +224,10 @@ def expose_metrics(_, userdata, msg):
 def main():
     """Start the exporter."""
     if settings.MQTT_V5_PROTOCOL:
-        client = mqtt.Client(protocol=mqtt.MQTTv5)
+        client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID, protocol=mqtt.MQTTv5)
     else:
         # if MQTT version 5 is not requesteed, we let mqtt lib choosing the protocol version
-        client = mqtt.Client()
+        client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID)
 
     def stop_request(signum, frame):
         """Stop handler for SIGTERM and SIGINT.

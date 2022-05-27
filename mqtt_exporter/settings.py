@@ -14,5 +14,6 @@ MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", "60"))
 MQTT_USERNAME = os.getenv("MQTT_USERNAME")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 MQTT_V5_PROTOCOL = os.getenv("MQTT_V5_PROTOCOL", "False") == "True"
+MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "")
 MQTT_EXPOSE_CLIENT_ID = os.getenv("MQTT_EXPOSE_CLIENT_ID", "False") == "True"
 PROMETHEUS_PORT = int(os.getenv("PROMETHEUS_PORT", "9000"))
