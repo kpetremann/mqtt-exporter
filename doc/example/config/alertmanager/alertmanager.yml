@@ -1,0 +1,12 @@
+route:
+  receiver: 'slack'
+  group_by: ['...']
+
+receivers:
+  - name: 'slack'
+    slack_configs:
+      - send_resolved: true
+        text: "{{ .CommonAnnotations.description }}"
+        username: 'CHANGEME'
+        channel: 'CHANGEME'
+        api_url: 'https://hooks.slack.com/services/CHANGEME'

@@ -1,0 +1,77 @@
+version: "3"
+
+services:
+
+  mqtt:
+    image: eclipse-mosquitto
+    ports:
+       - 1883:1883
+       - 9001:9001
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config/mosquitto/passwd.conf:/mosquitto/config/passwd.conf
+    restart: unless-stopped
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - ./config/zigbee2mqtt/:/app/data/
+    devices:
+      - /dev/ttyUSB0
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+
+  mosquitto-exporter:
+    image: sapcc/mosquitto-exporter
+    environment:
+      - "BROKER_ENDPOINT=tcp://mqtt:1883"
+      - MQTT_USER=RANDOM_USER
+      - MQTT_PASS=RANDOM_PASSWORD
+    restart: unless-stopped
+
+  mqtt-exporter:
+    image: kpetrem/mqtt-exporter
+    environment:
+      - MQTT_ADDRESS=mqtt
+      - PROMETHEUS_PREFIX=sensor_
+      - TOPIC_LABEL=sensor
+      - MQTT_USERNAME=RANDOM_USER
+      - MQTT_PASSWORD=RANDOM_PASSWORD
+      - ZIGBEE2MQTT_AVAILABILITY=True
+    ports:
+      - 8999:9000
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager
+    volumes:
+      - ./config/alertmanager/:/etc/alertmanager/
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - "--web.external-url=https://alertmanager.local"
+    ports:
+      - 9093:9093
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./config/grafana/datasources:/etc/grafana/datasources
+      - ./config/grafana/dashboards:/etc/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

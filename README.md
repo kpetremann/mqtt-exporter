@@ -182,6 +182,16 @@ Result:
 sensor_temperature{sensor=bedroom"} 22.3
 ```
 
+## Docker-compose full stack example
+
+This docker-compose aims to share a typical monitoring stack.
+
+If you need persistent metrics, I would advise using Thanos or Cortex. Of course there are other suitable persistent storage solution for Prometheus.
+
+[docker-compose.yaml](https://github.com/kpetremann/mqtt-exporter/blob/master/doc/example/docker-compose.yml)
+
+You can also add other cool software such as Home-Assistant.
+
 ## Contribute
 
 ### Dev environment

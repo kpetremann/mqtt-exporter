@@ -1,0 +1,33 @@
+homeassistant: true
+permit_join: true
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mqtt
+  user: CHANGEME
+  password: CHANGEME
+  keepalive: 60
+  reject_unauthorized: true
+  version: 4
+serial:
+  port: /dev/ttyUSB0
+advanced:
+  elapsed: true
+  pan_id: 6760
+  channel: 15
+  ikea_ota_use_test_url: false
+  log_syslog:
+    app_name: Zigbee2MQTT
+    eol: /n
+    host: localhost
+    localhost: localhost
+    path: /dev/log
+    pid: process.pid
+    port: 123
+    protocol: tcp4
+    type: '5424'
+  legacy_availability_payload: false
+frontend:
+  port: 8080
+  host: 0.0.0.0
+  auth_token: CHANGEME
+availability: true

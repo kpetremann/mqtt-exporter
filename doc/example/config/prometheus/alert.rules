@@ -1,0 +1,17 @@
+groups:
+  - name: iot
+    rules:
+      - alert: sensor_down
+        expr: 'sensor_linkquality == 0'
+        for: 12h
+        labels:
+          severity: notification-daily
+        annotations:
+          description: "Sensor {{ $labels.sensor }} is out or range"
+      - alert: sensor_no_fresh_data
+        expr: 'changes(sensor_temperature[6h]) == 0 and on(sensor) sensor_linkquality > 0'
+        for: 12h
+        labels:
+          severity: notification-daily
+        annotations:
+          description: "Sensor data did not change for 6 hours: {{ $labels.sensor }}"
