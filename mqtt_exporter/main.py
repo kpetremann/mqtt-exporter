@@ -28,17 +28,23 @@ STATE_VALUES = {
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
+prom_msg_counter = None  # pylint: disable=C0103
 
-if settings.MQTT_EXPOSE_CLIENT_ID:
-    prom_msg_counter = Counter(
-        f"{settings.PREFIX}message_total",
-        "Counter of received messages",
-        [settings.TOPIC_LABEL, "client_id"],
-    )
-else:
-    prom_msg_counter = Counter(
-        f"{settings.PREFIX}message_total", "Counter of received messages", [settings.TOPIC_LABEL]
-    )
+
+def _create_msg_counter_metrics():
+    global prom_msg_counter  # pylint: disable=W0603, C0103
+    if settings.MQTT_EXPOSE_CLIENT_ID:
+        prom_msg_counter = Counter(
+            f"{settings.PREFIX}message_total",
+            "Counter of received messages",
+            [settings.TOPIC_LABEL, "client_id"],
+        )
+    else:
+        prom_msg_counter = Counter(
+            f"{settings.PREFIX}message_total",
+            "Counter of received messages",
+            [settings.TOPIC_LABEL],
+        )
 
 
 def subscribe(client, _, __, result_code, *args):
@@ -68,7 +74,7 @@ def _create_prometheus_metric(prom_metric_name):
         LOG.info("creating prometheus metric: %s", prom_metric_name)
 
 
-def _add_prometheus_metric(topic, prom_metric_name, metric_value, client_id):
+def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
     labels = {settings.TOPIC_LABEL: topic}
     if settings.MQTT_EXPOSE_CLIENT_ID:
         labels["client_id"] = client_id
@@ -127,8 +133,8 @@ def _parse_metrics(data, topic, client_id, prefix=""):
         prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
         _create_prometheus_metric(prom_metric_name)
 
-        # expose the metric to prometheus
-        _add_prometheus_metric(topic, prom_metric_name, metric_value, client_id)
+        # expose the sample to prometheus
+        _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id)
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -241,6 +247,7 @@ def main():
         client.disconnect()
         sys.exit(0)
 
+    _create_msg_counter_metrics()
     signal.signal(signal.SIGTERM, stop_request)
     signal.signal(signal.SIGINT, stop_request)
 
