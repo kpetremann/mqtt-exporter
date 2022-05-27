@@ -1,4 +1,4 @@
 ---
 exclude_paths:
   - "README.md"
-  - "tests/*"
+  - "tests/**"
