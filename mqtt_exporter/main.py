@@ -28,49 +28,53 @@ STATE_VALUES = {
 
 # global variable
 prom_metrics = {}  # pylint: disable=C0103
-prom_msg_counter = Counter(
-    f"{settings.PREFIX}message_total", "Counter of received messages", [settings.TOPIC_LABEL]
-)
+
+if settings.MQTT_EXPOSE_CLIENT_ID:
+    prom_msg_counter = Counter(
+        f"{settings.PREFIX}message_total",
+        "Counter of received messages",
+        [settings.TOPIC_LABEL, "client_id"],
+    )
+else:
+    prom_msg_counter = Counter(
+        f"{settings.PREFIX}message_total", "Counter of received messages", [settings.TOPIC_LABEL]
+    )
 
 
-def subscribe(client, _, __, result_code):
+def subscribe(client, _, __, result_code, *args):
     """Subscribe to mqtt events (callback)."""
+    user_data = {"client_id": ""}
+    if args:
+        user_data["client_id"] = args[0].AssignedClientIdentifier
+
+    client.user_data_set(user_data)
+
     LOG.info('subscribing to "%s"', settings.TOPIC)
     client.subscribe(settings.TOPIC)
     if result_code != mqtt.CONNACK_ACCEPTED:
         LOG.error("MQTT %s", mqtt.connack_string(result_code))
 
 
-def _parse_metrics(data, topic, prefix=""):
-    """Attempt to parse a set of metrics.
+def _create_prometheus_metric(prom_metric_name):
+    """Create Prometheus metric if does not exist."""
+    if not prom_metrics.get(prom_metric_name):
+        labels = [settings.TOPIC_LABEL]
+        if settings.MQTT_EXPOSE_CLIENT_ID:
+            labels.append("client_id")
 
-    Note when `data` contains nested metrics this function will be called recursivley.
-    """
-    for metric, value in data.items():
-        # when value is a dict recursivley call _parse_metrics to handle these messages
-        if isinstance(value, dict):
-            LOG.debug("parsing dict %s: %s", metric, value)
-            _parse_metrics(value, topic, f"{prefix}{metric}_")
-            continue
+        prom_metrics[prom_metric_name] = Gauge(
+            prom_metric_name, "metric generated from MQTT message.", labels
+        )
+        LOG.info("creating prometheus metric: %s", prom_metric_name)
 
-        try:
-            metric_value = _parse_metric(value)
-        except ValueError as err:
-            LOG.debug("Failed to convert %s: %s", metric, err)
-            continue
 
-        # create metric if does not exist
-        prom_metric_name = f"{settings.PREFIX}{prefix}{metric}".replace(".", "").replace(" ", "_")
-        prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
-        if not prom_metrics.get(prom_metric_name):
-            prom_metrics[prom_metric_name] = Gauge(
-                prom_metric_name, "metric generated from MQTT message.", [settings.TOPIC_LABEL]
-            )
-            LOG.info("creating prometheus metric: %s", prom_metric_name)
+def _add_prometheus_metric(topic, prom_metric_name, metric_value, client_id):
+    labels = {settings.TOPIC_LABEL: topic}
+    if settings.MQTT_EXPOSE_CLIENT_ID:
+        labels["client_id"] = client_id
 
-        # expose the metric to prometheus
-        prom_metrics[prom_metric_name].labels(**{settings.TOPIC_LABEL: topic}).set(metric_value)
-        LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    prom_metrics[prom_metric_name].labels(**labels).set(metric_value)
+    LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
 
 
 def _parse_metric(data):
@@ -98,6 +102,33 @@ def _parse_metric(data):
 
     # We were not able to extract anything, let's bubble it up.
     raise ValueError(f"Can't parse '{data}' to a number.")
+
+
+def _parse_metrics(data, topic, client_id, prefix=""):
+    """Attempt to parse a set of metrics.
+
+    Note when `data` contains nested metrics this function will be called recursivley.
+    """
+    for metric, value in data.items():
+        # when value is a dict recursivley call _parse_metrics to handle these messages
+        if isinstance(value, dict):
+            LOG.debug("parsing dict %s: %s", metric, value)
+            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_")
+            continue
+
+        try:
+            metric_value = _parse_metric(value)
+        except ValueError as err:
+            LOG.debug("Failed to convert %s: %s", metric, err)
+            continue
+
+        # create metric if does not exist
+        prom_metric_name = f"{settings.PREFIX}{prefix}{metric}".replace(".", "").replace(" ", "_")
+        prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
+        _create_prometheus_metric(prom_metric_name)
+
+        # expose the metric to prometheus
+        _add_prometheus_metric(topic, prom_metric_name, metric_value, client_id)
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -153,9 +184,8 @@ def _parse_message(raw_topic, raw_payload):
             payload = {"zigbee_availability": payload["state"]}
 
     # parse MQTT topic
-
-    # handle nested topic
     try:
+        # handle nested topic
         topic = topic.replace("/", "_")
     except UnicodeDecodeError:
         LOG.debug('encountered undecodable topic: "%s"', raw_topic)
@@ -169,7 +199,7 @@ def _parse_message(raw_topic, raw_payload):
     return topic, payload
 
 
-def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
+def expose_metrics(_, userdata, msg):
     """Expose metrics to prometheus when a message has been published (callback)."""
     for ignore in settings.IGNORED_TOPICS:
         if fnmatch.fnmatch(msg.topic, ignore):
@@ -181,15 +211,23 @@ def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     if not topic or not payload:
         return
 
-    _parse_metrics(payload, topic)
+    _parse_metrics(payload, topic, userdata["client_id"])
 
     # increment received message counter
-    prom_msg_counter.labels(**{settings.TOPIC_LABEL: topic}).inc()
+    labels = {settings.TOPIC_LABEL: topic}
+    if settings.MQTT_EXPOSE_CLIENT_ID:
+        labels["client_id"] = userdata["client_id"]
+
+    prom_msg_counter.labels(**labels).inc()
 
 
 def main():
     """Start the exporter."""
-    client = mqtt.Client()
+    if settings.MQTT_V5_PROTOCOL:
+        client = mqtt.Client(protocol=mqtt.MQTTv5)
+    else:
+        # if MQTT version 5 is not requesteed, we let mqtt lib choosing the protocol version
+        client = mqtt.Client()
 
     def stop_request(signum, frame):
         """Stop handler for SIGTERM and SIGINT.
