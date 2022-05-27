@@ -171,7 +171,6 @@ def _parse_message(raw_topic, raw_payload):
 
 def expose_metrics(client, userdata, msg):  # pylint: disable=W0613
     """Expose metrics to prometheus when a message has been published (callback)."""
-
     for ignore in settings.IGNORED_TOPICS:
         if fnmatch.fnmatch(msg.topic, ignore):
             LOG.debug('Topic "%s" was ignored by entry "%s"', msg.topic, ignore)
