@@ -37,7 +37,7 @@ def subscribe(client, _, __, result_code):
     """Subscribe to mqtt events (callback)."""
     LOG.info('subscribing to "%s"', settings.TOPIC)
     client.subscribe(settings.TOPIC)
-    if rc != mqtt.CONNACK_ACCEPTED:
+    if result_code != mqtt.CONNACK_ACCEPTED:
         LOG.error("MQTT %s", mqtt.connack_string(result_code))
 
 
