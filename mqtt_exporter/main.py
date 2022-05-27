@@ -33,12 +33,12 @@ prom_msg_counter = Counter(
 )
 
 
-def subscribe(client, userdata, flags, connection_result):  # pylint: disable=W0613
+def subscribe(client, _, __, rc):
     """Subscribe to mqtt events (callback)."""
     LOG.info('subscribing to "%s"', settings.TOPIC)
     client.subscribe(settings.TOPIC)
-    if not client.is_connected():
-        LOG.error("Failed to subscribe to %s: connection failed", settings.TOPIC)
+    if rc != mqtt.CONNACK_ACCEPTED:
+        LOG.error("MQTT %s", mqtt.connack_string(rc))
 
 
 def _parse_metrics(data, topic, prefix=""):
