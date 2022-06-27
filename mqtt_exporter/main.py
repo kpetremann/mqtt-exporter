@@ -7,6 +7,7 @@ import logging
 import re
 import signal
 import sys
+import ssl
 
 import paho.mqtt.client as mqtt
 from prometheus_client import Counter, Gauge, start_http_server
@@ -259,7 +260,8 @@ def main():
     client.on_message = expose_metrics
 
     # tls settings
-    client.tls_insecure_set(settings.MQTT_TLS_ALLOW_INSECURE)
+    if settings.MQTT_TLS_ENABLE:
+        client.tls_set_context(context=ssl.create_default_context())
 
     # start the connection and the loop
     if settings.MQTT_USERNAME and settings.MQTT_PASSWORD:
