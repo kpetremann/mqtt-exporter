@@ -258,6 +258,9 @@ def main():
     client.on_connect = subscribe
     client.on_message = expose_metrics
 
+    # tls settings
+    client.tls_insecure_set(settings.MQTT_TLS_ALLOW_INSECURE)
+
     # start the connection and the loop
     if settings.MQTT_USERNAME and settings.MQTT_PASSWORD:
         client.username_pw_set(settings.MQTT_USERNAME, settings.MQTT_PASSWORD)
