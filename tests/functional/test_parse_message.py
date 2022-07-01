@@ -76,3 +76,33 @@ def test_parse_message__nested():
             "Current": 0.784,
         },
     }
+
+
+def test_parse_message__nested_with_dash_in_metric_name():
+    """Test message parsing when dash in metric name.
+
+    seen with tasmota + multiple DS18B20 sensors.
+    """
+    topic = "tele/balcony/SENSOR"
+    payload = '{ \
+        "Time": "2022-07-01T21:21:17", \
+        "DS18B20-1": { \
+            "Id": "022EDB070007", \
+            "Temperature": 15.9 \
+        }, \
+        "DS18B20-2": { \
+            "Id": "0316A279C254", \
+            "Temperature": 6.9 \
+        }, \
+        "TempUnit": "C" \
+    }'
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "tele_balcony_SENSOR"
+    assert parsed_payload == {
+        "Time": "2022-07-01T21:21:17",
+        "DS18B20-1": {"Id": "022EDB070007", "Temperature": 15.9},
+        "DS18B20-2": {"Id": "0316A279C254", "Temperature": 6.9},
+        "TempUnit": "C",
+    }
