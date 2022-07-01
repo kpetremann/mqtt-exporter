@@ -214,3 +214,4 @@ Follow usual best practices:
   * use comprehensible variable name
   * one function = one purpose
   * function name should define perfectly its purpose
+  * please add/adapt unit and functional tests
