@@ -18,3 +18,11 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
     }
 
     _parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
+
+
+def test_parse_metrics__zwavejs():
+    """Test metrics parsing for ZWavejs2Mqtt."""
+    parsed_topic = "zwave_backroom_multisensor_sensor_multilevel_endpoint_0"
+    parsed_payload = {"air_temperature": 83.2}
+
+    _parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")

@@ -158,12 +158,39 @@ def _normalize_name_in_topic_msg(topic, payload):
     * payload: 20.00
     """
     info = topic.split("/")
+    payload_dict = {}
+
+    # Shellies format
     try:
         topic = f"{info[0]}/{info[1]}".lower()
         payload_dict = {info[-1]: payload}  # usually the last element is the type of sensor
     except IndexError:
         pass
 
+    return topic, payload_dict
+
+
+def _normalize_zwave2mqtt_format(topic, payload):
+    """Normalize zwave2mqtt format.
+
+    Only supports named topics:
+    <mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>
+    <mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>
+    """
+    info = topic.split("/")
+
+    # join PropertyName and PropertyKey
+    if len(info) == 7:
+        # when PropertyKey is set
+        topic = "/".join(info[-2:]).lower()
+    elif len(info) == 6:
+        # when PropertyKey is not provided
+        topic = "/".join(info[:-1]).lower()
+    else:
+        # the metric is not matching the zwave2mqtt format
+        return topic, payload
+
+    payload_dict = {info[-1].lower(): payload["value"]}
     return topic, payload_dict
 
 
@@ -181,6 +208,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if not isinstance(payload, dict):
         topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
+    elif raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
+        topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
     else:
         topic = raw_topic
 
