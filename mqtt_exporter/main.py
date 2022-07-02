@@ -173,24 +173,25 @@ def _normalize_name_in_topic_msg(topic, payload):
 def _normalize_zwave2mqtt_format(topic, payload):
     """Normalize zwave2mqtt format.
 
+    Example:
+    zwave/BackRoom/Multisensor/sensor_multilevel/endpoint_0/Air_temperature
+    zwave/Stereo/PowerStrip/status
+
     Only supports named topics:
-    <mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>
-    <mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>
+    <mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<endpoint>/<propertyName>/<propertyKey>
     """
+    if "node_info" in topic or "endpoint_" not in topic:
+        return topic, {}
+
     info = topic.split("/")
 
-    # join PropertyName and PropertyKey
-    if len(info) == 7:
-        # when PropertyKey is set
-        topic = "/".join(info[-2:]).lower()
-    elif len(info) == 6:
-        # when PropertyKey is not provided
-        topic = "/".join(info[:-1]).lower()
-    else:
-        # the metric is not matching the zwave2mqtt format
-        return topic, payload
+    # the endpoint location permits to differentiate the properties from the sensor ID
+    properties_index = [i for i, k in enumerate(info) if k.startswith("endpoint_")][0] + 1
 
-    payload_dict = {info[-1].lower(): payload["value"]}
+    topic = "/".join(info[:properties_index]).lower()
+    properties = "_".join(info[properties_index:])
+    payload_dict = {properties.lower(): payload["value"]}
+
     return topic, payload_dict
 
 
