@@ -177,10 +177,13 @@ def _normalize_zwave2mqtt_format(topic, payload):
     zwave/BackRoom/Multisensor/sensor_multilevel/endpoint_0/Air_temperature
     zwave/Stereo/PowerStrip/status
 
-    Only supports named topics:
+    Only supports named topics or at least when endpoint_ is defined:
     <mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<endpoint>/<propertyName>/<propertyKey>
     """
     if "node_info" in topic or "endpoint_" not in topic:
+        return topic, {}
+
+    if not isinstance(payload, dict) or "value" not in payload:
         return topic, {}
 
     info = topic.split("/")
@@ -207,10 +210,10 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
 
-    if not isinstance(payload, dict):
-        topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
-    elif raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
+    if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif not isinstance(payload, dict):
+        topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
     else:
         topic = raw_topic
 
