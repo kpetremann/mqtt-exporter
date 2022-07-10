@@ -106,3 +106,23 @@ def test_parse_message__nested_with_dash_in_metric_name():
         "DS18B20-2": {"Id": "0316A279C254", "Temperature": 6.9},
         "TempUnit": "C",
     }
+
+
+def test_parse_message__zwave_js():
+    """Test parsing of ZWavejs2Mqtt message."""
+    topic = "zwave/BackRoom/Multisensor/sensor_multilevel/endpoint_0/Air_temperature"
+    payload = '{"time":1656470510619,"value":83.2}'
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+    assert parsed_topic == "zwave_backroom_multisensor_sensor_multilevel_endpoint_0"
+    assert parsed_payload == {"air_temperature": 83.2}
+
+
+def test_parse_message__zwave_js__payload_not_dict():
+    """Test parsing of ZWavejs2Mqtt message."""
+    topic = "zwave/BackRoom/Multisensor/sensor_multilevel/endpoint_0/Air_temperature"
+    payload = "83.2"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+    assert parsed_topic == "zwave_BackRoom_Multisensor_sensor_multilevel_endpoint_0_Air_temperature"
+    assert parsed_payload == {}

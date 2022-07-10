@@ -158,11 +158,42 @@ def _normalize_name_in_topic_msg(topic, payload):
     * payload: 20.00
     """
     info = topic.split("/")
+    payload_dict = {}
+
+    # Shellies format
     try:
         topic = f"{info[0]}/{info[1]}".lower()
         payload_dict = {info[-1]: payload}  # usually the last element is the type of sensor
     except IndexError:
         pass
+
+    return topic, payload_dict
+
+
+def _normalize_zwave2mqtt_format(topic, payload):
+    """Normalize zwave2mqtt format.
+
+    Example:
+    zwave/BackRoom/Multisensor/sensor_multilevel/endpoint_0/Air_temperature
+    zwave/Stereo/PowerStrip/status
+
+    Only supports named topics or at least when endpoint_ is defined:
+    <mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<endpoint>/<propertyName>/<propertyKey>
+    """
+    if "node_info" in topic or "endpoint_" not in topic:
+        return topic, {}
+
+    if not isinstance(payload, dict) or "value" not in payload:
+        return topic, {}
+
+    info = topic.split("/")
+
+    # the endpoint location permits to differentiate the properties from the sensor ID
+    properties_index = [i for i, k in enumerate(info) if k.startswith("endpoint_")][0] + 1
+
+    topic = "/".join(info[:properties_index]).lower()
+    properties = "_".join(info[properties_index:])
+    payload_dict = {properties.lower(): payload["value"]}
 
     return topic, payload_dict
 
@@ -179,7 +210,9 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
 
-    if not isinstance(payload, dict):
+    if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
+        topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif not isinstance(payload, dict):
         topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
     else:
         topic = raw_topic
