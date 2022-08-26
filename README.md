@@ -84,6 +84,7 @@ Parameters are passed using environment variables.
 
 The list of parameters are:
   * `LOG_LEVEL`: Logging level (default: INFO)
+  * `LOG_MQTT_MESSAGE`: Log MQTT original message, only if LOG_LEVEL is set to DEBUG (default: False)
   * `MQTT_IGNORED_TOPICS`: Comma-separated lists of topics to ignore. Accepts wildcards. (default: None)
   * `MQTT_ADDRESS`: IP or hostname of MQTT broker (default: 127.0.0.1)
   * `MQTT_PORT`: TCP port of MQTT broker (default: 1883)

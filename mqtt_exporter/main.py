@@ -249,6 +249,9 @@ def expose_metrics(_, userdata, msg):
             LOG.debug('Topic "%s" was ignored by entry "%s"', msg.topic, ignore)
             return
 
+    if settings.LOG_MQTT_MESSAGE:
+        LOG.debug("New message from MQTT: %s - %s", msg.topic, msg.payload)
+
     topic, payload = _parse_message(msg.topic, msg.payload)
 
     if not topic or not payload:
