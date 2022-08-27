@@ -51,7 +51,7 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 
 ### Zigbee2MQTT device availability support
 
-**Note: Supports only non-legacy mode** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-advanced-configuration)
+**Important notice: legacy availability payload is not supported and must disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
 
 When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
 
@@ -63,7 +63,7 @@ mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
 To avoid having different topic for the same device, the exporter has a normalization feature disabled by default.
 It can be enabled by setting ZIGBEE2MQTT_AVAILABILITY varenv to "True".
 
-I will remove the suffix from the topic, and change the metric name accordingly:
+It will remove the suffix from the topic, and change the metric name accordingly:
 
 ```
 mqtt_zigbee_availability{topic="zigbee2mqtt_garage"} 1.0
