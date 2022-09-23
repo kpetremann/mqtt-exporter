@@ -83,6 +83,8 @@ To setup this, you need to specify the topic prefix used by Zwavejs2Mqtt in `ZWA
 Parameters are passed using environment variables.
 
 The list of parameters are:
+  * `ADDITIONAL_LABELS`: If set to True then additional labels will be retrieved from topic (default: False)
+  * `ADDITIONAL_LABELS_REGEX`: Regular expression to extract additional labels (default: None). This setting is required is `ADDITIONAL_LABELS` is set to True.
   * `LOG_LEVEL`: Logging level (default: INFO)
   * `LOG_MQTT_MESSAGE`: Log MQTT original message, only if LOG_LEVEL is set to DEBUG (default: False)
   * `MQTT_IGNORED_TOPICS`: Comma-separated lists of topics to ignore. Accepts wildcards. (default: None)
@@ -97,6 +99,8 @@ The list of parameters are:
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
   * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
   * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
+  * `SEPARATE_METRICS`: If set to True then every topic will generate separate metric (default: False)
+  * `SEPARATE_METRIC_ID_REGEX`: You can override default regular expression used to extract metric name from topic (defaul: '(?P<metric_id>.*)')
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
   * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
