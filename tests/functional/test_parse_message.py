@@ -1,5 +1,6 @@
 """Functional tests of MQTT message parsing."""
-from mqtt_exporter.main import _parse_message
+from mqtt_exporter import settings
+from mqtt_exporter.main import _extract_additional_labels, _parse_message
 
 
 def test__parse_message__aqara_style():
@@ -39,6 +40,61 @@ def test__parse_message__generic_single_value_style():
 
     assert parsed_topic == "dht_livingroom"
     assert parsed_payload == {"TEMPERATURE": 20.0}
+
+
+def test__parse_message__additional_labels():
+    """Test label extraction when ADDITIONAL_LABELS is enabled."""
+    settings.ADDITIONAL_LABELS = "True"
+    settings.ADDITIONAL_LABELS_REGEX = (
+        "(?P<node_name>.*?)/(?P<source_device>.*?)/(?P<location>.*?)/.*"
+    )
+    topic = "espnode/air/outdoor/sensor/temperature/state"
+    payload = "20.0"
+
+    additional_labels = _extract_additional_labels(topic)
+    assert additional_labels == {
+        "node_name": "espnode",
+        "source_device": "air",
+        "location": "outdoor",
+    }
+
+
+def test__parse_message__additional_labels_incorrect_param():
+    """Test incorrect parameters settings for ADDITIONAL_LABELS"""
+    settings.ADDITIONAL_LABELS = "True"
+    settings.ADDITIONAL_LABELS_REGEX = None
+    topic = "espnode/air/outdoor/sensor/temperature/state"
+    additional_labels = _extract_additional_labels(topic)
+    assert additional_labels == None
+
+
+def test__parse_message__separated_metrics():
+    """Test message parsing when SEPARATE_METRICS is enabled.
+
+    This is ESPHome style
+    """
+    settings.SEPARATE_METRICS = "True"
+    topic = "espnode/sensor/temperature/state"
+    payload = "20.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+    assert parsed_topic == "espnode_sensor_temperature_state"
+    assert parsed_payload == {"espnode_sensor_temperature_state": 20.0}
+
+
+def test__parse_message__separated_metrics_custom_regex():
+    """Test message parsing when SEPARATE_METRICS is enabled.
+
+    This is ESPHome style
+    """
+    settings.SEPARATE_METRICS = "True"
+    settings.SEPARATE_METRIC_ID_REGEX = "espnode/sensor/(?P<metric_id>.*)/state"
+    topic = "espnode/sensor/temperature/state"
+    payload = "20.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+    assert parsed_topic == "espnode_sensor_temperature_state"
+    assert parsed_payload == {"temperature": 20.0}
 
 
 def test_parse_message__nested():

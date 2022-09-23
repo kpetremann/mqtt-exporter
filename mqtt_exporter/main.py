@@ -74,10 +74,15 @@ def _create_prometheus_metric(prom_metric_name):
         LOG.info("creating prometheus metric: %s", prom_metric_name)
 
 
-def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
+def _add_prometheus_sample(
+    topic, prom_metric_name, metric_value, client_id, additional_labels=None
+):
     labels = {settings.TOPIC_LABEL: topic}
     if settings.MQTT_EXPOSE_CLIENT_ID:
         labels["client_id"] = client_id
+
+    if additional_labels:
+        labels = {**labels, **additional_labels}
 
     prom_metrics[prom_metric_name].labels(**labels).set(metric_value)
     LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
@@ -115,6 +120,7 @@ def _parse_metrics(data, topic, client_id, prefix=""):
 
     Note when `data` contains nested metrics this function will be called recursivley.
     """
+    additional_labels = _extract_additional_labels(topic)
     for metric, value in data.items():
         # when value is a dict recursivley call _parse_metrics to handle these messages
         if isinstance(value, dict):
@@ -138,7 +144,46 @@ def _parse_metrics(data, topic, client_id, prefix=""):
         _create_prometheus_metric(prom_metric_name)
 
         # expose the sample to prometheus
-        _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id)
+        _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id, additional_labels)
+
+
+def _extract_additional_labels(topic):
+    """Extract additional labels from topic.
+
+    Used for ESPHome.
+
+    If ADDITIONAL_LABELS environment variable set to True then every other named match from
+    topic will be added to metric label. I.e., you can extract additional
+    app identifier from ESPHome via following regex
+    "(?P<application_id>.*?)/sensor/(?P<metric_id>.*)/sensor" in ADDITIONAL_LABELS_REGEX
+
+    Example:
+    * topic: esp_meteo/room/sensor/humidity/state
+    * regex: (?P<source_app>.*)/(?P<location>.*)/.*
+    * additional_labels:
+    {
+        "source_app" => "esp_meteo",
+        "location" => "room"
+    }
+    """
+    if settings.ADDITIONAL_LABELS:
+        if not settings.ADDITIONAL_LABELS_REGEX:
+            LOG.error(
+                "Invalid regular expression ADDITIONAL_LABELS_REGEX - corrupted configuration."
+            )
+            return None
+        match_labels = re.match(settings.ADDITIONAL_LABELS_REGEX, topic)
+        if match_labels:
+            try:
+                label_groups = match_labels.groupdict()
+                LOG.debug(f"Found {len(label_groups)} labels")
+                return label_groups
+            except AttributeError:
+                LOG.debug("Unable to identify label")
+                return None
+        else:
+            LOG.debug("No additional labels found.")
+            return None
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -150,22 +195,45 @@ def _normalize_name_in_topic_msg(topic, payload):
     - Shelly sensors
     - Custom integration with single value
 
-    Warning: only support when the last item in the topic is the actual metric name
+    Metric name can be retrieved with SEPARATE_METRICS = 'True' and corresponding
+    regular expression passed in SEPARATE_METRIC_ID_REGEX environment variable.
+    By default metric name is the whole topic.
+    If you're using ESPHome then topic names usually formed as
+    {APP_ID}/sensor/{SENSOR_ID}/state for sensors values. In this case regular expression can be
+    defined as "(?P<metric_id>.*)/state".
+
+    If ADDITIONAL_LABELS environment variable set to True then every other named match from
+    topic will be added to metric label. I.e., you can extract additional app identifier from
+    ESPHome via following regex "(?P<application_id>.*?)/sensor/(?P<metric_id>.*)/sensor"
+    in ADDITIONAL_LABELS_REGEX
 
     Example:
     Shelly integrated topic and payload differently than usually (Aqara)
     * topic: shellies/room/sensor/temperature
     * payload: 20.00
     """
-    info = topic.split("/")
     payload_dict = {}
+    if settings.SEPARATE_METRICS:
+        match = re.match(settings.SEPARATE_METRIC_ID_REGEX, topic)
+        if not match:
+            LOG.debug(f"Unable to parse topic {topic}.")
+            return None, None
+        metric_id = match.group("metric_id")
+        if not metric_id:
+            LOG.debug(f"Unable to find metric identifier in topic {topic}.")
+            return None, None
+        metric_id = metric_id.replace("/", "_")
+        payload_dict = {metric_id: payload}
+    else:
+        info = topic.split("/")
 
-    # Shellies format
-    try:
-        topic = f"{info[0]}/{info[1]}".lower()
-        payload_dict = {info[-1]: payload}  # usually the last element is the type of sensor
-    except IndexError:
-        pass
+        # Shellies format
+        try:
+            topic = f"{info[0]}/{info[1]}".lower()
+            # usually the last element is the type of sensor
+            payload_dict = {info[-1]: payload}
+        except IndexError:
+            pass
 
     return topic, payload_dict
 
