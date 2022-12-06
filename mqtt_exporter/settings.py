@@ -19,3 +19,5 @@ MQTT_V5_PROTOCOL = os.getenv("MQTT_V5_PROTOCOL", "False") == "True"
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "")
 MQTT_EXPOSE_CLIENT_ID = os.getenv("MQTT_EXPOSE_CLIENT_ID", "False") == "True"
 PROMETHEUS_PORT = int(os.getenv("PROMETHEUS_PORT", "9000"))
+
+KEEP_FULL_TOPIC = os.getenv("KEEP_FULL_TOPIC", "False") == "True"

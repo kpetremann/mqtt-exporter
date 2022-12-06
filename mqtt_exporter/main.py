@@ -162,7 +162,11 @@ def _normalize_name_in_topic_msg(topic, payload):
 
     # Shellies format
     try:
-        topic = f"{info[0]}/{info[1]}".lower()
+        if settings.KEEP_FULL_TOPIC:  # options instead of hardcoded length
+            topic = "/".join(info[:-1]).lower()
+        else:
+            topic = f"{info[0]}/{info[1]}".lower()
+
         payload_dict = {info[-1]: payload}  # usually the last element is the type of sensor
     except IndexError:
         pass
