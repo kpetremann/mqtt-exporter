@@ -38,6 +38,7 @@ The exporter is tested with:
   * Aqara/Xiaomi sensors (WSDCGQ11LM and VOCKQJK11LM)
   * SONOFF sensors (SNZB-02)
   * Shelly sensors (H&T wifi)
+  * Shelly power sensors (3EM - only with `KEEP_FULL_TOPIC` enabled)
 
 ### Metrics conversion example
 ```
@@ -83,6 +84,7 @@ To setup this, you need to specify the topic prefix used by Zwavejs2Mqtt in `ZWA
 Parameters are passed using environment variables.
 
 The list of parameters are:
+  * `KEEP_FULL_TOPIC`: Keep entire topic instead of the first two elements only. Usecase: Shelly 3EM (default: False)
   * `LOG_LEVEL`: Logging level (default: INFO)
   * `LOG_MQTT_MESSAGE`: Log MQTT original message, only if LOG_LEVEL is set to DEBUG (default: False)
   * `MQTT_IGNORED_TOPICS`: Comma-separated lists of topics to ignore. Accepts wildcards. (default: None)

@@ -1,4 +1,5 @@
 """Functional tests of MQTT message parsing."""
+from mqtt_exporter import settings
 from mqtt_exporter.main import _parse_message
 
 
@@ -16,8 +17,8 @@ def test__parse_message__aqara_style():
     assert parsed_payload == {"temperature": 26.24, "humidity": 45.37}
 
 
-def test__parse_message__shelly_style():
-    """Test message parsing with shelly style."""
+def test__parse_message__shelly_style_ht():
+    """Test message parsing with shelly style H&T."""
     topic = "shellies/room/sensor/temperature"
     payload = b"20.00"
 
@@ -25,6 +26,19 @@ def test__parse_message__shelly_style():
 
     assert parsed_topic == "shellies_room"
     assert parsed_payload == {"temperature": 20.00}
+
+
+def test__parse_message__shelly_style_3em():
+    """Test message parsing with shelly style (3EM)."""
+    topic = "shellies/room/emeter/0/power"
+    payload = b"1"
+
+    settings.KEEP_FULL_TOPIC = True
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+    settings.KEEP_FULL_TOPIC = False
+
+    assert parsed_topic == "shellies_room_emeter_0"
+    assert parsed_payload == {"power": 1}
 
 
 def test__parse_message__generic_single_value_style():
