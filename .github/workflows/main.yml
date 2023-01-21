@@ -11,21 +11,28 @@ jobs:
         steps:
         -
             name: Checkout
-            uses: actions/checkout@v2
+            uses: actions/checkout@v3
+        - 
+            name: Login to GitHub Container Registry
+            uses: docker/login-action@v2
+            with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
         -
             name: Login to DockerHub
-            uses: docker/login-action@v1 
+            uses: docker/login-action@v2
             with:
                 username: ${{ secrets.DOCKERHUB_USERNAME }}
                 password: ${{ secrets.DOCKERHUB_TOKEN }}
         -
             name: Set up QEMU
             id: qemu
-            uses: docker/setup-qemu-action@v1
+            uses: docker/setup-qemu-action@v2
         -
             name: Set up Docker Buildx
             id: buildx
-            uses: docker/setup-buildx-action@v1
+            uses: docker/setup-buildx-action@v2
         -
             name: Build and push
             uses: docker/build-push-action@v2
@@ -36,3 +43,4 @@ jobs:
                 push: true
                 tags: |
                     ${{ secrets.DOCKERHUB_USERNAME }}/mqtt-exporter:latest
+                    ghcr.io/${{ github.repository_owner }}/mqtt-exporter:latest
