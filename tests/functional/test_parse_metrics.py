@@ -2,6 +2,7 @@
 from mqtt_exporter import main
 from mqtt_exporter.main import _parse_metrics
 
+
 def test_parse_metrics__nested_with_dash_in_metric_name():
     """Test metrics parsing when dash in metric name.
 
@@ -18,6 +19,7 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
     }
 
     _parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
+
 
 def test_metrics_escaping():
     """Verify that all keys are escaped properly"""
