@@ -1,6 +1,6 @@
 """Functional tests of metrics parsing."""
+from mqtt_exporter import main
 from mqtt_exporter.main import _parse_metrics
-
 
 def test_parse_metrics__nested_with_dash_in_metric_name():
     """Test metrics parsing when dash in metric name.
@@ -18,3 +18,18 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
     }
 
     _parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
+
+def test_metrics_escaping():
+    """"Verify that all keys are escaped properly"""
+    main.prom_metrics = {}
+    parsed_topic = "test_topic"
+    parsed_payload = {
+        "test_value/a": 42,
+        "test_value-b": 37,
+        "test_value c": 13,
+    }
+    main._parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
+
+    assert "mqtt_test_value_a" in main.prom_metrics
+    assert "mqtt_test_value_b" in main.prom_metrics
+    assert "mqtt_test_value_c" in main.prom_metrics
