@@ -20,7 +20,7 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
     _parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
 
 def test_metrics_escaping():
-    """"Verify that all keys are escaped properly"""
+    """Verify that all keys are escaped properly"""
     main.prom_metrics = {}
     parsed_topic = "test_topic"
     parsed_payload = {
