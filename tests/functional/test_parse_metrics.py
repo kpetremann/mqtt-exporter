@@ -22,7 +22,7 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
 
 
 def test_metrics_escaping():
-    """Verify that all keys are escaped properly"""
+    """Verify that all keys are escaped properly."""
     main.prom_metrics = {}
     parsed_topic = "test_topic"
     parsed_payload = {
@@ -30,6 +30,7 @@ def test_metrics_escaping():
         "test_value-b": 37,
         "test_value c": 13,
     }
+    # pylama: ignore=W0212
     main._parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
 
     assert "mqtt_test_value_a" in main.prom_metrics
