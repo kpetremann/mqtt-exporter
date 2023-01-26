@@ -133,6 +133,7 @@ def _parse_metrics(data, topic, client_id, prefix=""):
             f"{settings.PREFIX}{prefix}{metric}".replace(".", "")
             .replace(" ", "_")
             .replace("-", "_")
+            .replace("/", "_")
         )
         prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
         _create_prometheus_metric(prom_metric_name)
