@@ -4,6 +4,8 @@ on:
     push:
         branches:
             - master
+        tags:
+            - 'v*'
 
 jobs:
     release:
@@ -12,7 +14,19 @@ jobs:
         -
             name: Checkout
             uses: actions/checkout@v3
-        - 
+        -
+            name: Docker meta
+            id: meta
+            uses: docker/metadata-action@v4
+            with:
+              images: |
+                ${{ secrets.DOCKERHUB_USERNAME }}/mqtt-exporter
+                ghcr.io/${{ github.repository_owner }}/mqtt-exporter
+              tags: |
+                type=ref,event=branch
+                type=semver,pattern={{version}}
+                type=semver,pattern={{major}}.{{minor}}.{{patch}}
+        -
             name: Login to GitHub Container Registry
             uses: docker/login-action@v2
             with:
@@ -39,8 +53,6 @@ jobs:
             with:
                 context: .
                 file: ./Dockerfile
-                platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
+                platforms: linux/amd64,linux/arm64
                 push: true
-                tags: |
-                    ${{ secrets.DOCKERHUB_USERNAME }}/mqtt-exporter:latest
-                    ghcr.io/${{ github.repository_owner }}/mqtt-exporter:latest
+                tags: ${{ steps.meta.outputs.tags }}
