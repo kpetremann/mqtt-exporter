@@ -116,6 +116,12 @@ def _parse_metrics(data, topic, client_id, prefix=""):
     Note when `data` contains nested metrics this function will be called recursivley.
     """
     for metric, value in data.items():
+        # when value is a list recursivley call _parse_metrics to handle these messages
+        if isinstance(value, list):
+            LOG.debug("parsing list %s: %s", metric, value)
+            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_")
+            continue
+
         # when value is a dict recursivley call _parse_metrics to handle these messages
         if isinstance(value, dict):
             LOG.debug("parsing dict %s: %s", metric, value)
