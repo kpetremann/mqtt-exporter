@@ -37,12 +37,13 @@ def test_metrics_escaping():
     assert "mqtt_test_value_b" in main.prom_metrics
     assert "mqtt_test_value_c" in main.prom_metrics
 
+
 def test_parse_metrics__value_is_list():
     """Verify if list recursion works properly."""
     main.prom_metrics = {}
     parsed_topic = "test_topic"
     parsed_payload = {
-        "test_value": [1,2]
+        "test_value": [1, 2]
     }
     main._parse_metrics(parsed_payload, parsed_topic, "dummy_client_id")
     assert "mqtt_test_value_0" in main.prom_metrics
