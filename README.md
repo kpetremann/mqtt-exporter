@@ -13,11 +13,11 @@
 Simple and generic Prometheus exporter for MQTT.
 Tested with Mosquitto MQTT and Xiaomi sensors.
 
-It exposes metrics from MQTT message out of the box (you just need to specify the target if not on localhost).
+It exposes metrics from MQTT message out of the box. You just need to specify the target if not on localhost.
 
 MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric values.
 
-It also provides message counters for each MQTT topic (since PR #5):
+It also provides message counters for each MQTT topic:
 ```
 mqtt_message_total{instance="mqtt-exporter:9000", job="mqtt-exporter", topic="zigbee2mqtt_0x00157d00032b1234"} 10
 ```
@@ -52,7 +52,7 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 
 ### Zigbee2MQTT device availability support
 
-**Important notice: legacy availability payload is not supported and must disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
+**Important notice: legacy availability payload is not supported and must be disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
 
 When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
 
@@ -61,17 +61,17 @@ mqtt_state{topic="zigbee2mqtt_garage_availability"} 1.0
 mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
 ```
 
-To avoid having different topic for the same device, the exporter has a normalization feature disabled by default.
+To avoid having different topics for the same device, the exporter has a normalization feature disabled by default.
 It can be enabled by setting ZIGBEE2MQTT_AVAILABILITY varenv to "True".
 
-It will remove the suffix from the topic, and change the metric name accordingly:
+It will remove the suffix from the topic and change the metric name accordingly:
 
 ```
 mqtt_zigbee_availability{topic="zigbee2mqtt_garage"} 1.0
 mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
 ```
 
-Note: the metric name mqtt_state  is not kept to reduce collision risks as it is too common.
+Note: the metric name mqtt_state is not kept to reduce collision risks as it is too common.
 
 ### Zwavejs2Mqtt
 
@@ -196,7 +196,7 @@ sensor_temperature{sensor=bedroom"} 22.3
 
 This docker-compose aims to share a typical monitoring stack.
 
-If you need persistent metrics, I would advise using Thanos or Cortex. Of course there are other suitable persistent storage solution for Prometheus.
+If you need persistent metrics, I would advise using VictoriaMetrics. Of course there are other suitable persistent storage solutions for Prometheus.
 
 [docker-compose.yaml](https://github.com/kpetremann/mqtt-exporter/blob/master/doc/example/docker-compose.yml)
 
