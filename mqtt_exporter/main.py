@@ -209,6 +209,22 @@ def _normalize_zwave2mqtt_format(topic, payload):
     return topic, payload_dict
 
 
+def _normalize_esphome_format(topic, payload):
+    """Normalize esphome format.
+
+    Example:
+    esphome/sensor/temperature/state
+
+    Only supports default state_topic:
+    <topic_prefix>/<component_type>/<component_name>/state
+    """
+    info = topic.split("/")
+
+    topic = f"{info[0]}/{info[1]}"
+    payload_dict = {info[-2]: payload}
+    return topic, payload_dict
+
+
 def _parse_message(raw_topic, raw_payload):
     """Parse topic and payload to have exposable information."""
     # parse MQTT payload
@@ -223,6 +239,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif settings.ESPHOME_TOPIC_PREFIX and raw_topic.startswith(settings.ESPHOME_TOPIC_PREFIX):
+        topic, payload = _normalize_esphome_format(raw_topic, payload)
     elif not isinstance(payload, dict):
         topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
     else:

@@ -6,6 +6,7 @@ TOPIC_LABEL = os.getenv("TOPIC_LABEL", "topic")
 TOPIC = os.getenv("MQTT_TOPIC", "#")
 IGNORED_TOPICS = os.getenv("MQTT_IGNORED_TOPICS", "").split(",")
 ZWAVE_TOPIC_PREFIX = os.getenv("ZWAVE_TOPIC_PREFIX", "zwave/")
+ESPHOME_TOPIC_PREFIX = os.getenv("ESPHOME_TOPIC_PREFIX", "")
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
