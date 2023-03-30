@@ -147,7 +147,7 @@ def test__parse_message__esphome_style():
 
     Same format for SONOFF sensors.
     """
-    settings.ESPHOME_TOPIC_PREFIX = "esphome/"
+    settings.ESPHOME_TOPIC_PREFIXES = ["esp", "ESP"]
     topic = "esphome/outdoor/sensor/temperature/state"
     payload = "20.0"
 
@@ -155,3 +155,11 @@ def test__parse_message__esphome_style():
 
     assert parsed_topic == "esphome_outdoor"
     assert parsed_payload == {"temperature": 20.0}
+
+    topic = "ESPHOME/indoor/sensor/temperature/state"
+    payload = "22.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "esphome_indoor"
+    assert parsed_payload == {"temperature": 22.0}

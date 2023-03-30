@@ -220,9 +220,17 @@ def _normalize_esphome_format(topic, payload):
     """
     info = topic.split("/")
 
-    topic = f"{info[0]}/{info[1]}"
+    topic = f"{info[0].lower()}/{info[1].lower()}"
     payload_dict = {info[-2]: payload}
     return topic, payload_dict
+
+
+def _is_esphome_topic(topic):
+    for prefix in settings.ESPHOME_TOPIC_PREFIXES:
+        if prefix and topic.startswith(prefix):
+            return True
+
+    return False
 
 
 def _parse_message(raw_topic, raw_payload):
@@ -239,7 +247,7 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
-    elif settings.ESPHOME_TOPIC_PREFIX and raw_topic.startswith(settings.ESPHOME_TOPIC_PREFIX):
+    elif _is_esphome_topic(raw_topic):
         topic, payload = _normalize_esphome_format(raw_topic, payload)
     elif not isinstance(payload, dict):
         topic, payload = _normalize_name_in_topic_msg(raw_topic, payload)
