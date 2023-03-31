@@ -71,13 +71,25 @@ mqtt_zigbee_availability{topic="zigbee2mqtt_garage"} 1.0
 mqtt_temperature{topic="zigbee2mqtt_garage"} 1.0
 ```
 
-Note: the metric name mqtt_state is not kept to reduce collision risks as it is too common.
+Note: the metric name mqtt_state is not kept reducing collision risks as it is too common.
 
 ### Zwavejs2Mqtt
 
 This exporter also supports Zwavejs2Mqtt metrics, preferably using "named topics" (see [official documentation](https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=gateway)).
 
-To setup this, you need to specify the topic prefix used by Zwavejs2Mqtt in `ZWAVE_TOPIC_PREFIX` the environment variable (default being "zwave/").
+To set up this, you need to specify the topic prefix used by Zwavejs2Mqtt in `ZWAVE_TOPIC_PREFIX` the environment variable (default being "zwave/").
+
+### ESPHome
+
+ESPHome is supported only when using the default `state_topic`: "<TOPIC_PREFIX>/<COMPONENT_TYPE>/<COMPONENT_NAME>/state". (see [official documentation](https://esphome.io/components/mqtt.html#mqtt-component-base-configuration)).
+
+To set up this, you need to specify the topic prefix list used by ESPHome in `ESPHOME_TOPIC_PREFIXES` the environment variable (default being "", so disabled).
+
+This is a list so you can simply set one or more topic prefixes, the separator being a comma.
+
+Example: `ESPHOME_TOPIC_PREFIXES="esphome-weather-indoor,esphome-weather-outdoor"`
+
+If all of your ESPHome topics share a same prefix, you can simply put the common part. In the above example, `"esphome"` will match all topic starting by "esphome".
 
 ### Configuration
 
@@ -102,6 +114,7 @@ The list of parameters are:
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
   * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
+  * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for Zwavejs2Mqtt messages (default: "")
 
 ### Deployment
 
