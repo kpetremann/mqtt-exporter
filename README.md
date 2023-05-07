@@ -218,3 +218,11 @@ You can also add other cool software such as Home-Assistant.
 ## Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+### Support
+
+If you like my work, don't hesitate to buy me a coffee :)
+
+<a href="https://www.buymeacoffee.com/kpetremann" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+[![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/kpetremann)
