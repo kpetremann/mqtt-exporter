@@ -21,14 +21,9 @@ mqttExporter:
       tls:
         enable: false
         verify: true
-    client:
-      id: ""
-      exposeId: false
   prometheus:
     prefix: mqtt_
     topic_label: topic
-
-
 
 image:
   repository: kpetrem/mqtt-exporter
