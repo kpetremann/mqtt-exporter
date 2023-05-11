@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import signal
+import ssl
 import sys
 from dataclasses import dataclass
 
@@ -408,6 +409,20 @@ def main():
     else:
         # if MQTT version 5 is not requested, we let MQTT lib choose the protocol version
         client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID)
+
+    client.enable_logger(LOG)
+
+    if settings.MQTT_ENABLE_TLS:
+        LOG.debug("Enabling TLS on MQTT client")
+        ssl_context = ssl.create_default_context()
+        ssl_context.load_default_certs()
+
+        if settings.MQTT_TLS_NO_VERIFY:
+            LOG.debug("Not verifying MQTT certificate authority is trusted")
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+    client.tls_set_context(ssl_context)
 
     def stop_request(signum, frame):
         """Stop handler for SIGTERM and SIGINT.
