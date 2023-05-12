@@ -8,8 +8,8 @@ import re
 import signal
 import sys
 import ssl
-
 import paho.mqtt.client as mqtt
+
 from prometheus_client import Counter, Gauge, start_http_server
 from mqtt_exporter import settings
 
