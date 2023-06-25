@@ -9,7 +9,7 @@ import signal
 import sys
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Counter, Gauge, start_http_server
+from prometheus_client import Counter, Gauge, metrics, start_http_server
 
 from mqtt_exporter import settings
 
@@ -61,12 +61,32 @@ def subscribe(client, _, __, result_code, *args):
         LOG.error("MQTT %s", mqtt.connack_string(result_code))
 
 
+def _normalize_prometheus_metric_name(prom_metric_name):
+    """Transform an invalid prometheus metric to a valid one.
+
+    https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+    """
+    if metrics.METRIC_NAME_RE.match(prom_metric_name):
+        return prom_metric_name
+
+    # clean invalid characted
+    prom_metric_name = re.sub(r"[^a-zA-Z0-9_:]", "", prom_metric_name)
+
+    # ensure to start with valid character
+    if not re.match(r"^[a-zA-Z_:]", prom_metric_name):
+        prom_metric_name = ":" + prom_metric_name
+
+    return prom_metric_name
+
+
 def _create_prometheus_metric(prom_metric_name):
     """Create Prometheus metric if does not exist."""
     if not prom_metrics.get(prom_metric_name):
         labels = [settings.TOPIC_LABEL]
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
+
+        prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
 
         try:
             prom_metrics[prom_metric_name] = Gauge(
