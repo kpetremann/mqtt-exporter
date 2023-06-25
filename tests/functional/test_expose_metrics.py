@@ -20,10 +20,10 @@ def _exec(client_id, mocker):
     userdata = {"client_id": client_id}
     msg = mocker.Mock()
     msg.topic = "zigbee2mqtt/garage"
-    msg.payload = '{"temperature": "23.5", "humidity": "40.5"}'
+    msg.payload = '{"temperature°C": "23.5", "humidity": "40.5"}'
     main.expose_metrics(None, userdata, msg)
 
-    temperatures = main.prom_metrics["mqtt_temperature"].collect()
+    temperatures = main.prom_metrics["mqtt_temperatureC"].collect()
     humidity = main.prom_metrics["mqtt_humidity"].collect()
 
     return temperatures, humidity

@@ -86,18 +86,16 @@ def _create_prometheus_metric(prom_metric_name):
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
 
-        prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
-
-        try:
-            prom_metrics[prom_metric_name] = Gauge(
-                prom_metric_name, "metric generated from MQTT message.", labels
-            )
-            LOG.info("creating prometheus metric: %s", prom_metric_name)
-        except ValueError as error:
-            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_name, error)
+        prom_metrics[prom_metric_name] = Gauge(
+            prom_metric_name, "metric generated from MQTT message.", labels
+        )
+        LOG.info("creating prometheus metric: %s", prom_metric_name)
 
 
 def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
+    if prom_metric_name not in prom_metrics:
+        return
+
     labels = {settings.TOPIC_LABEL: topic}
     if settings.MQTT_EXPOSE_CLIENT_ID:
         labels["client_id"] = client_id
@@ -165,7 +163,12 @@ def _parse_metrics(data, topic, client_id, prefix=""):
             .replace("/", "_")
         )
         prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
-        _create_prometheus_metric(prom_metric_name)
+        prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
+        try:
+            _create_prometheus_metric(prom_metric_name)
+        except ValueError as error:
+            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_name, error)
+            return
 
         # expose the sample to prometheus
         _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id)
