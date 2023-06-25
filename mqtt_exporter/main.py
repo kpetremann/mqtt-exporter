@@ -68,10 +68,13 @@ def _create_prometheus_metric(prom_metric_name):
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
 
-        prom_metrics[prom_metric_name] = Gauge(
-            prom_metric_name, "metric generated from MQTT message.", labels
-        )
-        LOG.info("creating prometheus metric: %s", prom_metric_name)
+        try:
+            prom_metrics[prom_metric_name] = Gauge(
+                prom_metric_name, "metric generated from MQTT message.", labels
+            )
+            LOG.info("creating prometheus metric: %s", prom_metric_name)
+        except ValueError as error:
+            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_name, error)
 
 
 def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
