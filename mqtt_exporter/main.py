@@ -257,8 +257,6 @@ def _normalize_hubitat_format(topic, payload):
     Example:
     hubitat/hub1/some room/temperature/value
     """
-    breakpoint()
-
     info = topic.split("/")
 
     if len(info) < 3:
