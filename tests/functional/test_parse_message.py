@@ -163,3 +163,15 @@ def test__parse_message__esphome_style():
 
     assert parsed_topic == "esphome_indoor"
     assert parsed_payload == {"temperature": 22.0}
+
+
+def test__parse_message__hubitat_style():
+    # hubitat/[hubname]/[device name]/[attribute name]/value
+
+    topic = "hubitat/hub1/some_room/temperature/value"
+    payload = "20.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "hubitat_hub1_some_room"
+    assert parsed_payload == 20.0

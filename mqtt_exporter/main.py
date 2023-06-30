@@ -251,8 +251,34 @@ def _normalize_esphome_format(topic, payload):
     return topic, payload_dict
 
 
+def _normalize_hubitat_format(topic, payload):
+    """Normalize hubitat format.
+
+    Example:
+    hubitat/hub1/some room/temperature/value
+    """
+    breakpoint()
+
+    info = topic.split("/")
+
+    if len(info) < 3:
+        return topic, payload
+
+    topic = f"{info[0].lower()}_{info[1].lower()}_{info[2].lower()}"
+    payload_dict = {info[-2]: payload}
+    return topic, payload_dict
+
+
 def _is_esphome_topic(topic):
     for prefix in settings.ESPHOME_TOPIC_PREFIXES:
+        if prefix and topic.startswith(prefix):
+            return True
+
+    return False
+
+
+def _is_esphome_topic(topic):
+    for prefix in settings.HUBITAT_TOPIC_PREFIXES:
         if prefix and topic.startswith(prefix):
             return True
 
@@ -273,6 +299,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif _is_esphome_topic(raw_topic):
+        topic, payload = _normalize_hubitat_format(raw_topic, payload)
     elif _is_esphome_topic(raw_topic):
         topic, payload = _normalize_esphome_format(raw_topic, payload)
     elif not isinstance(payload, dict):
