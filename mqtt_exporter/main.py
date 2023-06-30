@@ -27,20 +27,20 @@ STATE_VALUES = {
 }
 
 # global variable
-prom_metrics = {}  # pylint: disable=C0103
-prom_msg_counter = None  # pylint: disable=C0103
+prom_metrics = {}
+prom_msg_counter = None
 
 
 def _create_msg_counter_metrics():
-    global prom_msg_counter  # pylint: disable=W0603, C0103
+    global prom_msg_counter  # noqa: PLW0603
     if settings.MQTT_EXPOSE_CLIENT_ID:
-        prom_msg_counter = Counter(
+        prom_msg_counter = Counter(  # noqa: PLW0603
             f"{settings.PREFIX}message_total",
             "Counter of received messages",
             [settings.TOPIC_LABEL, "client_id"],
         )
     else:
-        prom_msg_counter = Counter(
+        prom_msg_counter = Counter(  # noqa: PLW0603
             f"{settings.PREFIX}message_total",
             "Counter of received messages",
             [settings.TOPIC_LABEL],
