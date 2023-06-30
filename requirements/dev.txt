@@ -1,10 +1,5 @@
 -r base.txt
 -r tests.txt
-black
 invoke
-isort
 pdbpp
 pre-commit
-pydocstyle<6.2.0  # because of https://github.com/PyCQA/pydocstyle/issues/621
-pylama
-pylint
