@@ -170,7 +170,6 @@ def test__parse_message__hubitat_style():
 
     It  looks like: hubitat/[hubname]/[device name]/attributes/[attribute name]/value
     """
-
     topic = "hubitat/hub1/some_room/attributes/temperature/value"
     payload = "20.0"
 
