@@ -275,7 +275,7 @@ def _is_esphome_topic(topic):
     return False
 
 
-def _is_esphome_topic(topic):
+def _is_hubitat_topic(topic):
     for prefix in settings.HUBITAT_TOPIC_PREFIXES:
         if prefix and topic.startswith(prefix):
             return True
@@ -297,7 +297,7 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
-    elif _is_esphome_topic(raw_topic):
+    elif _is_hubitat_topic(raw_topic):
         topic, payload = _normalize_hubitat_format(raw_topic, payload)
     elif _is_esphome_topic(raw_topic):
         topic, payload = _normalize_esphome_format(raw_topic, payload)
