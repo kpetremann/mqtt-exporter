@@ -323,7 +323,7 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable topic: "%s"', raw_topic)
         return None, None
 
-    # handle not converted payload
+    # handle unconverted payload
     if not isinstance(payload, dict):
         LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, payload)
         return None, None
@@ -361,7 +361,7 @@ def main():
     if settings.MQTT_V5_PROTOCOL:
         client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID, protocol=mqtt.MQTTv5)
     else:
-        # if MQTT version 5 is not requesteed, we let mqtt lib choosing the protocol version
+        # if MQTT version 5 is not requested, we let MQTT lib choose the protocol version
         client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID)
 
     def stop_request(signum, frame):
