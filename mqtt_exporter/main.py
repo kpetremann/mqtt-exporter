@@ -91,17 +91,14 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
 
     https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
     """
-    if prom_metric_label_name.startswith("__"):
-        prom_metric_label_name = prom_metric_label_name[1:]
-    if metrics.METRIC_LABEL_NAME_RE.match(prom_metric_label_name):
-        return prom_metric_label_name
-
     # clean invalid characters
     prom_metric_label_name = re.sub(r"[^a-zA-Z0-9_]", "", prom_metric_label_name)
 
     # ensure to start with valid character
     if not re.match(r"^[a-zA-Z_]", prom_metric_label_name):
         prom_metric_label_name = "_" + prom_metric_label_name
+    if prom_metric_label_name.startswith("__"):
+        prom_metric_label_name = prom_metric_label_name[1:]
 
     return prom_metric_label_name
 

@@ -30,6 +30,8 @@ def test_normalize_prometheus_metric_name():
         ("__using_reserved_prefix", "_using_reserved_prefix"),
         ("1_start_with_number", "_1_start_with_number"),
         ("%start_with_invalid_char", "start_with_invalid_char"),
+        ("%__start_with_invalid_char", "_start_with_invalid_char"),
+        ("_%_start_with_invalid_char", "_start_with_invalid_char"),
     ],
 )
 def test_normalize_prometheus_metric_label_name(candidate, wanted):
