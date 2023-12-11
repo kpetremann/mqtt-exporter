@@ -35,7 +35,7 @@ prom_msg_counter = None
 @dataclass(frozen=True)
 class PromMetricId:
     name: str
-    labels: tuple[str] = ()
+    labels: tuple = ()
 
 
 def _create_msg_counter_metrics():
