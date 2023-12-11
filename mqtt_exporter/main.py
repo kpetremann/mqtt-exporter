@@ -91,6 +91,8 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
 
     https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
     """
+    if prom_metric_label_name.startswith("__"):
+        prom_metric_label_name = prom_metric_label_name[1:]
     if metrics.METRIC_LABEL_NAME_RE.match(prom_metric_label_name):
         return prom_metric_label_name
 
