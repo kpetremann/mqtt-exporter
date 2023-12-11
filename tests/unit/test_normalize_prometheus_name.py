@@ -2,8 +2,8 @@
 import pytest
 
 from mqtt_exporter.main import (
-    _normalize_prometheus_metric_name,
     _normalize_prometheus_metric_label_name,
+    _normalize_prometheus_metric_name,
 )
 
 
