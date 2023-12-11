@@ -100,7 +100,7 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
     prom_metric_label_name = re.sub(r"[^a-zA-Z0-9_]", "", prom_metric_label_name)
 
     # ensure to start with valid character
-    if not re.match(r"^[a-zA-Z_:]", prom_metric_label_name):
+    if not re.match(r"^[a-zA-Z_]", prom_metric_label_name):
         prom_metric_label_name = "_" + prom_metric_label_name
 
     return prom_metric_label_name
