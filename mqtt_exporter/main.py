@@ -7,6 +7,7 @@ import logging
 import re
 import signal
 import sys
+from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
 from prometheus_client import Counter, Gauge, metrics, start_http_server
@@ -29,6 +30,12 @@ STATE_VALUES = {
 # global variable
 prom_metrics = {}
 prom_msg_counter = None
+
+
+@dataclass(frozen=True)
+class PromMetricId:
+    name: str
+    labels: tuple = ()
 
 
 def _create_msg_counter_metrics():
@@ -79,29 +86,48 @@ def _normalize_prometheus_metric_name(prom_metric_name):
     return prom_metric_name
 
 
-def _create_prometheus_metric(prom_metric_name):
+def _normalize_prometheus_metric_label_name(prom_metric_label_name):
+    """Transform an invalid prometheus metric to a valid one.
+
+    https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+    """
+    # clean invalid characters
+    prom_metric_label_name = re.sub(r"[^a-zA-Z0-9_]", "", prom_metric_label_name)
+
+    # ensure to start with valid character
+    if not re.match(r"^[a-zA-Z_]", prom_metric_label_name):
+        prom_metric_label_name = "_" + prom_metric_label_name
+    if prom_metric_label_name.startswith("__"):
+        prom_metric_label_name = prom_metric_label_name[1:]
+
+    return prom_metric_label_name
+
+
+def _create_prometheus_metric(prom_metric_id):
     """Create Prometheus metric if does not exist."""
-    if not prom_metrics.get(prom_metric_name):
+    if not prom_metrics.get(prom_metric_id):
         labels = [settings.TOPIC_LABEL]
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
+        labels.extend(prom_metric_id.labels)
 
-        prom_metrics[prom_metric_name] = Gauge(
-            prom_metric_name, "metric generated from MQTT message.", labels
+        prom_metrics[prom_metric_id] = Gauge(
+            prom_metric_id.name, "metric generated from MQTT message.", labels
         )
-        LOG.info("creating prometheus metric: %s", prom_metric_name)
+        LOG.info("creating prometheus metric: %s", prom_metric_id)
 
 
-def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
-    if prom_metric_name not in prom_metrics:
+def _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, additional_labels):
+    if prom_metric_id not in prom_metrics:
         return
 
     labels = {settings.TOPIC_LABEL: topic}
     if settings.MQTT_EXPOSE_CLIENT_ID:
         labels["client_id"] = client_id
+    labels.update(additional_labels)
 
-    prom_metrics[prom_metric_name].labels(**labels).set(metric_value)
-    LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
+    LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
 
 def _parse_metric(data):
@@ -131,22 +157,25 @@ def _parse_metric(data):
     raise ValueError(f"Can't parse '{data}' to a number.")
 
 
-def _parse_metrics(data, topic, client_id, prefix=""):
+def _parse_metrics(data, topic, client_id, prefix="", labels=None):
     """Attempt to parse a set of metrics.
 
-    Note when `data` contains nested metrics this function will be called recursivley.
+    Note when `data` contains nested metrics this function will be called recursively.
     """
+    if labels is None:
+        labels = {}
+    label_keys = tuple(sorted(labels.keys()))
     for metric, value in data.items():
-        # when value is a list recursivley call _parse_metrics to handle these messages
+        # when value is a list recursively call _parse_metrics to handle these messages
         if isinstance(value, list):
             LOG.debug("parsing list %s: %s", metric, value)
-            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_")
+            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_", labels)
             continue
 
-        # when value is a dict recursivley call _parse_metrics to handle these messages
+        # when value is a dict recursively call _parse_metrics to handle these messages
         if isinstance(value, dict):
             LOG.debug("parsing dict %s: %s", metric, value)
-            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_")
+            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_", labels)
             continue
 
         try:
@@ -164,14 +193,15 @@ def _parse_metrics(data, topic, client_id, prefix=""):
         )
         prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
         prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
+        prom_metric_id = PromMetricId(prom_metric_name, label_keys)
         try:
-            _create_prometheus_metric(prom_metric_name)
+            _create_prometheus_metric(prom_metric_id)
         except ValueError as error:
-            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_name, error)
+            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_id, error)
             return
 
         # expose the sample to prometheus
-        _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id)
+        _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, labels)
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -331,6 +361,14 @@ def _parse_message(raw_topic, raw_payload):
     return topic, payload
 
 
+def _parse_properties(properties):
+    """Convert MQTTv5 properties to a dict."""
+    return {
+        _normalize_prometheus_metric_label_name(key): value
+        for key, value in properties.UserProperty
+    }
+
+
 def expose_metrics(_, userdata, msg):
     """Expose metrics to prometheus when a message has been published (callback)."""
     for ignore in settings.IGNORED_TOPICS:
@@ -346,7 +384,11 @@ def expose_metrics(_, userdata, msg):
     if not topic or not payload:
         return
 
-    _parse_metrics(payload, topic, userdata["client_id"])
+    if settings.MQTT_V5_PROTOCOL:
+        additional_labels = _parse_properties(msg.properties)
+    else:
+        additional_labels = {}
+    _parse_metrics(payload, topic, userdata["client_id"], labels=additional_labels)
 
     # increment received message counter
     labels = {settings.TOPIC_LABEL: topic}
