@@ -363,6 +363,9 @@ def _parse_message(raw_topic, raw_payload):
 
 def _parse_properties(properties):
     """Convert MQTTv5 properties to a dict."""
+    if not hasattr(properties, "UserProperty"):
+        return {}
+
     return {
         _normalize_prometheus_metric_label_name(key): value
         for key, value in properties.UserProperty
