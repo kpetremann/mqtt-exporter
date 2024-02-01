@@ -1,4 +1,5 @@
 """Functional tests of MQTT message parsing."""
+
 from mqtt_exporter import settings
 from mqtt_exporter.main import _parse_message
 

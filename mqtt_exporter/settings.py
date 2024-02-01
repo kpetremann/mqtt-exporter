@@ -1,4 +1,5 @@
 """Exporter configuration."""
+
 import os
 
 PREFIX = os.getenv("PROMETHEUS_PREFIX", "mqtt_")
