@@ -40,6 +40,10 @@ The exporter is tested with:
   * Shelly sensors (H&T wifi)
   * Shelly power sensors (3EM - only with `KEEP_FULL_TOPIC` enabled)
 
+It is also being used by users on:
+  * https://github.com/jomjol/AI-on-the-edge-device
+  * https://github.com/kbialek/deye-inverter-mqtt
+
 ### Metrics conversion example
 ```
 topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity":45.37}'
