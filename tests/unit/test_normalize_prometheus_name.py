@@ -1,4 +1,5 @@
 """Tests of Prometheus normalization metrics."""
+
 import pytest
 
 from mqtt_exporter.main import (

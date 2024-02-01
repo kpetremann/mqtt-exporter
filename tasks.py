@@ -1,4 +1,5 @@
 """Some tasks."""
+
 import os
 
 from invoke import task  # type: ignore
