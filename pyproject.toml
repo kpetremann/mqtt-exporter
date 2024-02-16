@@ -1,3 +1,15 @@
+[project]
+name = "mqtt-exporter"
+version = "1.4.1"
+description = "Simple generic MQTT Prometheus exporter for IoT working out of the box"
+license = { text = "MIT License" }
+authors = [
+    { name = "Kevin Petremann", email = "kpetrem@gmail.com" },
+]
+
+[project.scripts]
+mqtt-exporter = "mqtt_exporter.main:main"
+
 [tool.black]
 line-length = 100
 exclude = "venv/"
