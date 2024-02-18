@@ -9,6 +9,9 @@ skip_gitignore = true
 skip = ".bzr,.direnv,.eggs,.git,.hg,.mypy_cache,.nox,.pants.d,.svn,.tox,.venv,_build,buck-out,build,dist,node_modules,venv,migrations,urls.py"
 
 [tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",     # pycodestyle errors
     "W",     # pycodestyle warnings
@@ -31,13 +34,11 @@ ignore = [
     "PLR0915",  # too many statements
     "B009",     # do not call getattr with a constant attribute value
     "B904",     # raise without from inside except
+    "S104",     # possible binding to all interfaces
 ]
-line-length = 100
+pylint.max-args = 10
 
-[tool.ruff.pylint]
-max-args = 10
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*.py" = ["E402", "S", "PL"]
 
