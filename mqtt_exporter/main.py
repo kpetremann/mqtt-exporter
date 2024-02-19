@@ -426,7 +426,7 @@ def main():
     signal.signal(signal.SIGINT, stop_request)
 
     # start prometheus server
-    start_http_server(settings.PROMETHEUS_PORT)
+    start_http_server(settings.PROMETHEUS_PORT, settings.PROMETHEUS_ADDRESS)
 
     # define mqtt client
     client.on_connect = subscribe
