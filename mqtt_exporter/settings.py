@@ -1,4 +1,5 @@
 """Exporter configuration."""
+
 import os
 
 PREFIX = os.getenv("PROMETHEUS_PREFIX", "mqtt_")
@@ -7,6 +8,7 @@ TOPIC = os.getenv("MQTT_TOPIC", "#")
 IGNORED_TOPICS = os.getenv("MQTT_IGNORED_TOPICS", "").split(",")
 ZWAVE_TOPIC_PREFIX = os.getenv("ZWAVE_TOPIC_PREFIX", "zwave/")
 ESPHOME_TOPIC_PREFIXES = os.getenv("ESPHOME_TOPIC_PREFIXES", "").split(",")
+HUBITAT_TOPIC_PREFIXES = os.getenv("HUBITAT_TOPIC_PREFIXES", "hubitat/").split(",")
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -21,6 +23,7 @@ MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "")
 MQTT_EXPOSE_CLIENT_ID = os.getenv("MQTT_EXPOSE_CLIENT_ID", "False") == "True"
 MQTT_ENABLE_TLS = os.getenv("MQTT_ENABLE_TLS", "False") == "True"
 MQTT_TLS_NO_VERIFY = os.getenv("MQTT_TLS_NO_VERIFY", "False") == "True"
+PROMETHEUS_ADDRESS = os.getenv("PROMETHEUS_ADDRESS", "0.0.0.0")
 PROMETHEUS_PORT = int(os.getenv("PROMETHEUS_PORT", "9000"))
 
 KEEP_FULL_TOPIC = os.getenv("KEEP_FULL_TOPIC", "False") == "True"

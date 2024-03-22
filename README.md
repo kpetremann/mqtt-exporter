@@ -40,6 +40,10 @@ The exporter is tested with:
   * Shelly sensors (H&T wifi)
   * Shelly power sensors (3EM - only with `KEEP_FULL_TOPIC` enabled)
 
+It is also being used by users on:
+  * https://github.com/jomjol/AI-on-the-edge-device
+  * https://github.com/kbialek/deye-inverter-mqtt
+
 ### Metrics conversion example
 ```
 topic 'zigbee2mqtt/0x00157d00032b1234', payload '{"temperature":26.24,"humidity":45.37}'
@@ -81,7 +85,7 @@ To set up this, you need to specify the topic prefix used by Zwavejs2Mqtt in `ZW
 
 ### ESPHome
 
-ESPHome is supported only when using the default `state_topic`: "<TOPIC_PREFIX>/<COMPONENT_TYPE>/<COMPONENT_NAME>/state". (see [official documentation](https://esphome.io/components/mqtt.html#mqtt-component-base-configuration)).
+ESPHome is supported only when using the default `state_topic`: `<TOPIC_PREFIX>/<COMPONENT_TYPE>/<COMPONENT_NAME>/state`. (see [official documentation](https://esphome.io/components/mqtt.html#mqtt-component-base-configuration)).
 
 To set up this, you need to specify the topic prefix list used by ESPHome in `ESPHOME_TOPIC_PREFIXES` the environment variable (default being "", so disabled).
 
@@ -90,6 +94,14 @@ This is a list so you can simply set one or more topic prefixes, the separator b
 Example: `ESPHOME_TOPIC_PREFIXES="esphome-weather-indoor,esphome-weather-outdoor"`
 
 If all of your ESPHome topics share a same prefix, you can simply put the common part. In the above example, `"esphome"` will match all topic starting by "esphome".
+
+### Hubitat
+
+Hubitat is supported. By default all topic starting with `hubitat/` will be identified and parsed as Hubitat messages.
+
+Topics look like `hubitat/<hubname>/<device>/attributes/<attribute>/value`.
+
+Like for ESPHome, `HUBITAT_TOPIC_PREFIXES` is a list with `,` as a separator.
 
 ### Configuration
 
@@ -109,12 +121,14 @@ The list of parameters are:
   * `MQTT_V5_PROTOCOL`: Force to use MQTT protocol v5 instead of 3.1.1
   * `MQTT_CLIENT_ID`: Set client ID manually for MQTT connection
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
+  * `PROMETHEUS_ADDRESS`: HTTP server address to expose Prometheus metrics on (default: 0.0.0.0)
   * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
   * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
   * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
-  * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for Zwavejs2Mqtt messages (default: "")
+  * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for ESPHome messages (default: "")
+  * `HUBITAT_TOPIC_PREFIXES`: MQTT topic used for Hubitat messages (default: "hubitat/")
 
 ### Deployment
 

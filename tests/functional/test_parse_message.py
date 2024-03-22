@@ -1,4 +1,5 @@
 """Functional tests of MQTT message parsing."""
+
 from mqtt_exporter import settings
 from mqtt_exporter.main import _parse_message
 
@@ -143,7 +144,7 @@ def test_parse_message__zwave_js__payload_not_dict():
 
 
 def test__parse_message__esphome_style():
-    """Test message parsing with espthome style.
+    """Test message parsing with esphome style.
 
     Same format for SONOFF sensors.
     """
@@ -163,3 +164,17 @@ def test__parse_message__esphome_style():
 
     assert parsed_topic == "esphome_indoor"
     assert parsed_payload == {"temperature": 22.0}
+
+
+def test__parse_message__hubitat_style():
+    """Test message parsing with Hubitat style.
+
+    It  looks like: hubitat/[hubname]/[device name]/attributes/[attribute name]/value
+    """
+    topic = "hubitat/hub1/some_room/attributes/temperature/value"
+    payload = "20.0"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "hubitat_hub1_some_room"
+    assert parsed_payload == {"temperature": 20.0}

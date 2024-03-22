@@ -6,11 +6,13 @@ import json
 import logging
 import re
 import signal
-import sys
 import ssl
+import sys
+from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Counter, Gauge, start_http_server
+from prometheus_client import Counter, Gauge, metrics, start_http_server
+
 from mqtt_exporter import settings
 
 logging.basicConfig(level=settings.LOG_LEVEL)
@@ -27,20 +29,26 @@ STATE_VALUES = {
 }
 
 # global variable
-prom_metrics = {}  # pylint: disable=C0103
-prom_msg_counter = None  # pylint: disable=C0103
+prom_metrics = {}
+prom_msg_counter = None
+
+
+@dataclass(frozen=True)
+class PromMetricId:
+    name: str
+    labels: tuple = ()
 
 
 def _create_msg_counter_metrics():
-    global prom_msg_counter  # pylint: disable=W0603, C0103
+    global prom_msg_counter  # noqa: PLW0603
     if settings.MQTT_EXPOSE_CLIENT_ID:
-        prom_msg_counter = Counter(
+        prom_msg_counter = Counter(  # noqa: PLW0603
             f"{settings.PREFIX}message_total",
             "Counter of received messages",
             [settings.TOPIC_LABEL, "client_id"],
         )
     else:
-        prom_msg_counter = Counter(
+        prom_msg_counter = Counter(  # noqa: PLW0603
             f"{settings.PREFIX}message_total",
             "Counter of received messages",
             [settings.TOPIC_LABEL],
@@ -61,26 +69,66 @@ def subscribe(client, _, __, result_code, *args):
         LOG.error("MQTT %s", mqtt.connack_string(result_code))
 
 
-def _create_prometheus_metric(prom_metric_name):
+def _normalize_prometheus_metric_name(prom_metric_name):
+    """Transform an invalid prometheus metric to a valid one.
+
+    https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+    """
+    if metrics.METRIC_NAME_RE.match(prom_metric_name):
+        return prom_metric_name
+
+    # clean invalid characted
+    prom_metric_name = re.sub(r"[^a-zA-Z0-9_:]", "", prom_metric_name)
+
+    # ensure to start with valid character
+    if not re.match(r"^[a-zA-Z_:]", prom_metric_name):
+        prom_metric_name = ":" + prom_metric_name
+
+    return prom_metric_name
+
+
+def _normalize_prometheus_metric_label_name(prom_metric_label_name):
+    """Transform an invalid prometheus metric to a valid one.
+
+    https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+    """
+    # clean invalid characters
+    prom_metric_label_name = re.sub(r"[^a-zA-Z0-9_]", "", prom_metric_label_name)
+
+    # ensure to start with valid character
+    if not re.match(r"^[a-zA-Z_]", prom_metric_label_name):
+        prom_metric_label_name = "_" + prom_metric_label_name
+    if prom_metric_label_name.startswith("__"):
+        prom_metric_label_name = prom_metric_label_name[1:]
+
+    return prom_metric_label_name
+
+
+def _create_prometheus_metric(prom_metric_id):
     """Create Prometheus metric if does not exist."""
-    if not prom_metrics.get(prom_metric_name):
+    if not prom_metrics.get(prom_metric_id):
         labels = [settings.TOPIC_LABEL]
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
+        labels.extend(prom_metric_id.labels)
 
-        prom_metrics[prom_metric_name] = Gauge(
-            prom_metric_name, "metric generated from MQTT message.", labels
+        prom_metrics[prom_metric_id] = Gauge(
+            prom_metric_id.name, "metric generated from MQTT message.", labels
         )
-        LOG.info("creating prometheus metric: %s", prom_metric_name)
+        LOG.info("creating prometheus metric: %s", prom_metric_id)
 
 
-def _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id):
+def _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, additional_labels):
+    if prom_metric_id not in prom_metrics:
+        return
+
     labels = {settings.TOPIC_LABEL: topic}
     if settings.MQTT_EXPOSE_CLIENT_ID:
         labels["client_id"] = client_id
+    labels.update(additional_labels)
 
-    prom_metrics[prom_metric_name].labels(**labels).set(metric_value)
-    LOG.debug("new value for %s: %s", prom_metric_name, metric_value)
+    prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
+    LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
 
 def _parse_metric(data):
@@ -110,22 +158,25 @@ def _parse_metric(data):
     raise ValueError(f"Can't parse '{data}' to a number.")
 
 
-def _parse_metrics(data, topic, client_id, prefix=""):
+def _parse_metrics(data, topic, client_id, prefix="", labels=None):
     """Attempt to parse a set of metrics.
 
-    Note when `data` contains nested metrics this function will be called recursivley.
+    Note when `data` contains nested metrics this function will be called recursively.
     """
+    if labels is None:
+        labels = {}
+    label_keys = tuple(sorted(labels.keys()))
     for metric, value in data.items():
-        # when value is a list recursivley call _parse_metrics to handle these messages
+        # when value is a list recursively call _parse_metrics to handle these messages
         if isinstance(value, list):
             LOG.debug("parsing list %s: %s", metric, value)
-            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_")
+            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_", labels)
             continue
 
-        # when value is a dict recursivley call _parse_metrics to handle these messages
+        # when value is a dict recursively call _parse_metrics to handle these messages
         if isinstance(value, dict):
             LOG.debug("parsing dict %s: %s", metric, value)
-            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_")
+            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_", labels)
             continue
 
         try:
@@ -142,10 +193,16 @@ def _parse_metrics(data, topic, client_id, prefix=""):
             .replace("/", "_")
         )
         prom_metric_name = re.sub(r"\((.*?)\)", "", prom_metric_name)
-        _create_prometheus_metric(prom_metric_name)
+        prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
+        prom_metric_id = PromMetricId(prom_metric_name, label_keys)
+        try:
+            _create_prometheus_metric(prom_metric_id)
+        except ValueError as error:
+            LOG.error("unable to create prometheus metric '%s': %s", prom_metric_id, error)
+            return
 
         # expose the sample to prometheus
-        _add_prometheus_sample(topic, prom_metric_name, metric_value, client_id)
+        _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, labels)
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -225,8 +282,32 @@ def _normalize_esphome_format(topic, payload):
     return topic, payload_dict
 
 
+def _normalize_hubitat_format(topic, payload):
+    """Normalize hubitat format.
+
+    Example:
+    hubitat/hub1/some room/temperature/value
+    """
+    info = topic.split("/")
+
+    if len(info) < 3:
+        return topic, payload
+
+    topic = f"{info[0].lower()}_{info[1].lower()}_{info[2].lower()}"
+    payload_dict = {info[-2]: payload}
+    return topic, payload_dict
+
+
 def _is_esphome_topic(topic):
     for prefix in settings.ESPHOME_TOPIC_PREFIXES:
+        if prefix and topic.startswith(prefix):
+            return True
+
+    return False
+
+
+def _is_hubitat_topic(topic):
+    for prefix in settings.HUBITAT_TOPIC_PREFIXES:
         if prefix and topic.startswith(prefix):
             return True
 
@@ -247,6 +328,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif _is_hubitat_topic(raw_topic):
+        topic, payload = _normalize_hubitat_format(raw_topic, payload)
     elif _is_esphome_topic(raw_topic):
         topic, payload = _normalize_esphome_format(raw_topic, payload)
     elif not isinstance(payload, dict):
@@ -271,12 +354,23 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable topic: "%s"', raw_topic)
         return None, None
 
-    # handle not converted payload
+    # handle unconverted payload
     if not isinstance(payload, dict):
         LOG.debug('failed to parse: topic "%s" payload "%s"', raw_topic, payload)
         return None, None
 
     return topic, payload
+
+
+def _parse_properties(properties):
+    """Convert MQTTv5 properties to a dict."""
+    if not hasattr(properties, "UserProperty"):
+        return {}
+
+    return {
+        _normalize_prometheus_metric_label_name(key): value
+        for key, value in properties.UserProperty
+    }
 
 
 def expose_metrics(_, userdata, msg):
@@ -294,7 +388,11 @@ def expose_metrics(_, userdata, msg):
     if not topic or not payload:
         return
 
-    _parse_metrics(payload, topic, userdata["client_id"])
+    if settings.MQTT_V5_PROTOCOL:
+        additional_labels = _parse_properties(msg.properties)
+    else:
+        additional_labels = {}
+    _parse_metrics(payload, topic, userdata["client_id"], labels=additional_labels)
 
     # increment received message counter
     labels = {settings.TOPIC_LABEL: topic}
@@ -309,7 +407,7 @@ def main():
     if settings.MQTT_V5_PROTOCOL:
         client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID, protocol=mqtt.MQTTv5)
     else:
-        # if MQTT version 5 is not requesteed, we let mqtt lib choosing the protocol version
+        # if MQTT version 5 is not requested, we let MQTT lib choose the protocol version
         client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID)
 
     client.enable_logger(LOG)
@@ -343,7 +441,7 @@ def main():
     signal.signal(signal.SIGINT, stop_request)
 
     # start prometheus server
-    start_http_server(settings.PROMETHEUS_PORT)
+    start_http_server(settings.PROMETHEUS_PORT, settings.PROMETHEUS_ADDRESS)
 
     # define mqtt client
     client.on_connect = subscribe
