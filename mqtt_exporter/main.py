@@ -422,7 +422,7 @@ def main():
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
 
-    client.tls_set_context(ssl_context)
+        client.tls_set_context(ssl_context)
 
     def stop_request(signum, frame):
         """Stop handler for SIGTERM and SIGINT.
