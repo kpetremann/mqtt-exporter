@@ -55,18 +55,18 @@ def _create_msg_counter_metrics():
         )
 
 
-def subscribe(client, _, __, result_code, *args):
+def subscribe(client, _, __, reason_code, properties):
     """Subscribe to mqtt events (callback)."""
     user_data = {"client_id": settings.MQTT_CLIENT_ID}
-    if not settings.MQTT_CLIENT_ID and args:
-        user_data["client_id"] = args[0].AssignedClientIdentifier
+    if not settings.MQTT_CLIENT_ID:
+        user_data["client_id"] = properties.AssignedClientIdentifier
 
     client.user_data_set(user_data)
 
     LOG.info('subscribing to "%s"', settings.TOPIC)
     client.subscribe(settings.TOPIC)
-    if result_code != mqtt.CONNACK_ACCEPTED:
-        LOG.error("MQTT %s", mqtt.connack_string(result_code))
+    if reason_code != mqtt.CONNACK_ACCEPTED:
+        LOG.error("MQTT %s", mqtt.connack_string(reason_code))
 
 
 def _normalize_prometheus_metric_name(prom_metric_name):
@@ -405,10 +405,16 @@ def expose_metrics(_, userdata, msg):
 def main():
     """Start the exporter."""
     if settings.MQTT_V5_PROTOCOL:
-        client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID, protocol=mqtt.MQTTv5)
+        client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+            client_id=settings.MQTT_CLIENT_ID,
+            protocol=mqtt.MQTTv5,
+        )
     else:
         # if MQTT version 5 is not requested, we let MQTT lib choose the protocol version
-        client = mqtt.Client(client_id=settings.MQTT_CLIENT_ID)
+        client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=settings.MQTT_CLIENT_ID
+        )
 
     client.enable_logger(LOG)
 
