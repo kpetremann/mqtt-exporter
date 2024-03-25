@@ -1,0 +1,14 @@
+{{- if .Values.serviceMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "mqtt-exporter.fullname" . }}
+  labels:
+    {{- include "mqtt-exporter.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mqtt-exporter
+  endpoints:
+    - port: metrics
+{{- end }}
