@@ -58,7 +58,7 @@ def _create_msg_counter_metrics():
 def subscribe(client, _, __, reason_code, properties):
     """Subscribe to mqtt events (callback)."""
     user_data = {"client_id": settings.MQTT_CLIENT_ID}
-    if not settings.MQTT_CLIENT_ID:
+    if not settings.MQTT_CLIENT_ID and settings.MQTT_V5_PROTOCOL:
         user_data["client_id"] = properties.AssignedClientIdentifier
 
     client.user_data_set(user_data)
