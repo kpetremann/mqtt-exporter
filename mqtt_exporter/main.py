@@ -478,7 +478,6 @@ def main():
     args = parser.parse_args()
 
     if args.test:
-        print("# Test conversion from a topic/payload parsing:\n")
         topic = input("topic: ")
         payload = input("payload: ")
         print()
@@ -488,11 +487,12 @@ def main():
         for collector in collectors:
             REGISTRY.unregister(collector)
 
+        print("## Debug ##\n")
         topic, payload = _parse_message(topic, payload)
         print(f"parsed to: {topic} {payload}")
 
         _parse_metrics(payload, topic, "", labels=None)
-        print("\n# Metrics:")
+        print("\n## Result ##\n")
         print(str(generate_latest().decode("utf-8")))
     else:
         run()
