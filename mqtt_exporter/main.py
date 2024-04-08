@@ -12,7 +12,14 @@ import sys
 from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Counter, Gauge, metrics, start_http_server, generate_latest, REGISTRY
+from prometheus_client import (
+    REGISTRY,
+    Counter,
+    Gauge,
+    generate_latest,
+    metrics,
+    start_http_server,
+)
 
 from mqtt_exporter import settings
 
