@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mqtt-exporter.fullname" . }}
+  labels:
+    {{- include "mqtt-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mqtt-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mqtt-exporter.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mqtt-exporter.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+            - name: PROMETHEUS_PREFIX
+              value: {{ .Values.mqttExporter.prometheus.prefix | quote}}
+            - name: TOPIC_LABEL
+              value: {{ .Values.mqttExporter.prometheus.topic_label | quote }}
+            - name: MQTT_TOPIC
+              value: {{ .Values.mqttExporter.mqtt.topic | quote }}
+            - name: MQTT_ADDRESS
+              value: {{ .Values.mqttExporter.mqtt.connection.address | quote }}
+            - name: MQTT_PORT
+              value: {{ .Values.mqttExporter.mqtt.connection.port | quote }}
+            - name: MQTT_ADDRESS
+              value: {{ .Values.mqttExporter.mqtt.connection.address | quote }}
+            - name: MQTT_USERNAME
+              value: {{ .Values.mqttExporter.mqtt.connection.authentication.username | quote }}
+            - name: MQTT_PASSWORD
+              value: {{ .Values.mqttExporter.mqtt.connection.authentication.password | quote }}
+            - name: MQTT_TLS_NO_VERIFY
+              value: {{ .Values.mqttExporter.mqtt.connection.tls.noVerify | quote }}
+            - name: MQTT_ENABLE_TLS
+              value: {{ .Values.mqttExporter.mqtt.connection.tls.enable | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.mqttExporter.log.level | quote }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
