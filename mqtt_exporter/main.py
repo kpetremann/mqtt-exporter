@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """MQTT exporter."""
 
+import argparse
 import fnmatch
 import json
 import logging
@@ -11,7 +12,14 @@ import sys
 from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
-from prometheus_client import Counter, Gauge, metrics, start_http_server
+from prometheus_client import (
+    REGISTRY,
+    Counter,
+    Gauge,
+    generate_latest,
+    metrics,
+    start_http_server,
+)
 
 from mqtt_exporter import settings
 
@@ -402,7 +410,7 @@ def expose_metrics(_, userdata, msg):
     prom_msg_counter.labels(**labels).inc()
 
 
-def main():
+def run():
     """Start the exporter."""
     if settings.MQTT_V5_PROTOCOL:
         client = mqtt.Client(
@@ -458,6 +466,36 @@ def main():
         client.username_pw_set(settings.MQTT_USERNAME, settings.MQTT_PASSWORD)
     client.connect(settings.MQTT_ADDRESS, settings.MQTT_PORT, settings.MQTT_KEEPALIVE)
     client.loop_forever()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="MQTT-exporter",
+        description="Simple generic MQTT Prometheus exporter for IoT working out of the box.",
+        epilog="https://github.com/kpetremann/mqtt-exporter",
+    )
+    parser.add_argument("--test", action="store_true")
+    args = parser.parse_args()
+
+    if args.test:
+        topic = input("topic: ")
+        payload = input("payload: ")
+        print()
+
+        # clear registry
+        collectors = list(REGISTRY._collector_to_names.keys())
+        for collector in collectors:
+            REGISTRY.unregister(collector)
+
+        print("## Debug ##\n")
+        topic, payload = _parse_message(topic, payload)
+        print(f"parsed to: {topic} {payload}")
+
+        _parse_metrics(payload, topic, "", labels=None)
+        print("\n## Result ##\n")
+        print(str(generate_latest().decode("utf-8")))
+    else:
+        run()
 
 
 if __name__ == "__main__":

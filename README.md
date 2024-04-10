@@ -229,6 +229,33 @@ If you need persistent metrics, I would advise using VictoriaMetrics. Of course 
 
 You can also add other cool software such as Home-Assistant.
 
+## CLI interactive test
+
+You can use the test mode to preview the conversion of a topic and payload to Prometheus metrics.
+
+Usage example:
+
+```
+$ python ./exporter.py --test
+topic: zigbee2mqtt/0x00157d00032b1234
+payload: {"temperature":26.24,"humidity":45.37}
+
+## Debug ##
+
+parsed to: zigbee2mqtt_0x00157d00032b1234 {'temperature': 26.24, 'humidity': 45.37}
+INFO:mqtt-exporter:creating prometheus metric: PromMetricId(name='mqtt_temperature', labels=())
+INFO:mqtt-exporter:creating prometheus metric: PromMetricId(name='mqtt_humidity', labels=())
+
+## Result ##
+
+# HELP mqtt_temperature metric generated from MQTT message.
+# TYPE mqtt_temperature gauge
+mqtt_temperature{topic="zigbee2mqtt_0x00157d00032b1234"} 26.24
+# HELP mqtt_humidity metric generated from MQTT message.
+# TYPE mqtt_humidity gauge
+mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
+```
+
 ## Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
