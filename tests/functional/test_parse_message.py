@@ -166,6 +166,26 @@ def test__parse_message__esphome_style():
     assert parsed_payload == {"temperature": 22.0}
 
 
+def test__parse_message__esphome_style__binary_sensor():
+    """Test message parsing with esphome style for a binary sensor."""
+    settings.ESPHOME_TOPIC_PREFIXES = ["esp", "ESP"]
+    topic = "esphome/outdoor/binary_sensor/sunlight/state"
+    payload = "ON"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "esphome_outdoor"
+    assert parsed_payload == {"sunlight": 1.0}
+
+    topic = "ESPHOME/indoor/binary_sensor/sunlight/state"
+    payload = "OFF"
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "esphome_indoor"
+    assert parsed_payload == {"sunlight": 0.0}
+
+
 def test__parse_message__hubitat_style():
     """Test message parsing with Hubitat style.
 
