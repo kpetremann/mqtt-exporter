@@ -332,14 +332,14 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable payload: "%s"', raw_payload)
         return None, None
 
-    try:
-        if raw_payload in STATE_VALUES:
-            payload = STATE_VALUES[raw_payload]
-        else:
+    if raw_payload in STATE_VALUES:
+        payload = STATE_VALUES[raw_payload]
+    else:
+        try:
             payload = json.loads(raw_payload)
-    except json.JSONDecodeError:
-        LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
-        return None, None
+        except json.JSONDecodeError:
+            LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
+            return None, None
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
