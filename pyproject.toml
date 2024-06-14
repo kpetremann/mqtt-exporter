@@ -16,6 +16,10 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
 ]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements/base.txt"] }
 
 [project.urls]
 Homepage = "https://github.com/kpetremann/mqtt-exporter"
