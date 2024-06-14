@@ -24,7 +24,7 @@ Homepage = "https://github.com/kpetremann/mqtt-exporter"
 mqtt-exporter = "mqtt_exporter.main:main"
 
 [tool.setuptools]
-py-modules = ["mqtt_exporter"]
+packages = ["mqtt_exporter"]
 
 [tool.black]
 line-length = 100
