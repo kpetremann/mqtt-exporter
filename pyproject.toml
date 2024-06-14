@@ -2,10 +2,23 @@
 name = "mqtt-exporter"
 version = "1.4.4"
 description = "Simple generic MQTT Prometheus exporter for IoT working out of the box"
+readme = "README.md"
 license = { text = "MIT License" }
 authors = [
     { name = "Kevin Petremann", email = "kpetrem@gmail.com" },
 ]
+keywords = ["iot", "mqtt", "prometheus"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/kpetremann/mqtt-exporter"
 
 [project.scripts]
 mqtt-exporter = "mqtt_exporter.main:main"
