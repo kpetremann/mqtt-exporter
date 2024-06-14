@@ -10,6 +10,9 @@ authors = [
 [project.scripts]
 mqtt-exporter = "mqtt_exporter.main:main"
 
+[tool.setuptools]
+py-modules = ["mqtt_exporter"]
+
 [tool.black]
 line-length = 100
 exclude = "venv/"
