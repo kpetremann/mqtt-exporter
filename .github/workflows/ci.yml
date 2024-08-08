@@ -24,7 +24,7 @@ jobs:
                   pip install -r requirements/dev.txt
 
             - name: Lint with Ruff
-              run: ruff .
+              run: ruff check .
 
             - name: Lint with Black
               run: black . --check --diff
