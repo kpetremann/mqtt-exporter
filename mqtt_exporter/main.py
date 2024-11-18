@@ -9,7 +9,9 @@ import re
 import signal
 import ssl
 import sys
+import time
 from dataclasses import dataclass
+
 
 import paho.mqtt.client as mqtt
 from prometheus_client import (
@@ -123,6 +125,11 @@ def _create_prometheus_metric(prom_metric_id):
         prom_metrics[prom_metric_id] = Gauge(
             prom_metric_id.name, "metric generated from MQTT message.", labels
         )
+
+        ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+        prom_metrics[ts_metric_id] = Gauge(
+            ts_metric_id.name, "timestamp of metric generated from MQTT message.", labels
+        )
         LOG.info("creating prometheus metric: %s", prom_metric_id)
 
 
@@ -136,6 +143,9 @@ def _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, addit
     labels.update(additional_labels)
 
     prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
+
+    ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+    prom_metrics[ts_metric_id].labels(**labels).set(int(time.time()))
     LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
 
