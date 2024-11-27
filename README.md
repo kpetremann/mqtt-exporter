@@ -129,6 +129,7 @@ The list of parameters are:
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
   * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for ESPHome messages (default: "")
   * `HUBITAT_TOPIC_PREFIXES`: MQTT topic used for Hubitat messages (default: "hubitat/")
+  *  `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
 
 ### Deployment
 
