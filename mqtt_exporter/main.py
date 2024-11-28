@@ -12,7 +12,6 @@ import sys
 import time
 from dataclasses import dataclass
 
-
 import paho.mqtt.client as mqtt
 from prometheus_client import (
     REGISTRY,
