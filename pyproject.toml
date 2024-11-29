@@ -1,6 +1,6 @@
 [project]
 name = "mqtt-exporter"
-version = "1.4.7"
+version = "1.5.0"
 description = "Simple generic MQTT Prometheus exporter for IoT working out of the box"
 readme = "README.md"
 license = { text = "MIT License" }
