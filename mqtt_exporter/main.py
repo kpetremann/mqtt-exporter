@@ -10,6 +10,7 @@ import signal
 import ssl
 import sys
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
@@ -37,15 +38,17 @@ STATE_VALUES = {
     "OFFLINE": 0,
 }
 
-# global variable
-prom_metrics = {}
-prom_msg_counter = None
-
 
 @dataclass(frozen=True)
 class PromMetricId:
     name: str
     labels: tuple = ()
+
+
+# global variables
+metric_refs: dict[str, list[tuple]] = defaultdict(list)
+prom_metrics: dict[PromMetricId, Gauge] = {}
+prom_msg_counter = None
 
 
 def _create_msg_counter_metrics():
@@ -113,7 +116,7 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
     return prom_metric_label_name
 
 
-def _create_prometheus_metric(prom_metric_id):
+def _create_prometheus_metric(prom_metric_id, original_topic):
     """Create Prometheus metric if does not exist."""
     if not prom_metrics.get(prom_metric_id):
         labels = [settings.TOPIC_LABEL]
@@ -124,17 +127,21 @@ def _create_prometheus_metric(prom_metric_id):
         prom_metrics[prom_metric_id] = Gauge(
             prom_metric_id.name, "metric generated from MQTT message.", labels
         )
+        metric_refs[original_topic].append((prom_metric_id, labels))
 
         if settings.EXPOSE_LAST_SEEN:
             ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
             prom_metrics[ts_metric_id] = Gauge(
                 ts_metric_id.name, "timestamp of metric generated from MQTT message.", labels
             )
+            metric_refs[original_topic].append((ts_metric_id, labels))
 
         LOG.info("creating prometheus metric: %s", prom_metric_id)
 
 
-def _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, additional_labels):
+def _add_prometheus_sample(
+    topic, original_topic, prom_metric_id, metric_value, client_id, additional_labels
+):
     if prom_metric_id not in prom_metrics:
         return
 
@@ -144,10 +151,12 @@ def _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, addit
     labels.update(additional_labels)
 
     prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
+    metric_refs[original_topic].append((prom_metric_id, labels))
 
     if settings.EXPOSE_LAST_SEEN:
         ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
         prom_metrics[ts_metric_id].labels(**labels).set(int(time.time()))
+        metric_refs[original_topic].append((ts_metric_id, labels))
 
     LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
@@ -179,7 +188,7 @@ def _parse_metric(data):
     raise ValueError(f"Can't parse '{data}' to a number.")
 
 
-def _parse_metrics(data, topic, client_id, prefix="", labels=None):
+def _parse_metrics(data, topic, original_topic, client_id, prefix="", labels=None):
     """Attempt to parse a set of metrics.
 
     Note when `data` contains nested metrics this function will be called recursively.
@@ -187,17 +196,25 @@ def _parse_metrics(data, topic, client_id, prefix="", labels=None):
     if labels is None:
         labels = {}
     label_keys = tuple(sorted(labels.keys()))
+
     for metric, value in data.items():
         # when value is a list recursively call _parse_metrics to handle these messages
         if isinstance(value, list):
             LOG.debug("parsing list %s: %s", metric, value)
-            _parse_metrics(dict(enumerate(value)), topic, client_id, f"{prefix}{metric}_", labels)
+            _parse_metrics(
+                dict(enumerate(value)),
+                topic,
+                original_topic,
+                client_id,
+                f"{prefix}{metric}_",
+                labels,
+            )
             continue
 
         # when value is a dict recursively call _parse_metrics to handle these messages
         if isinstance(value, dict):
             LOG.debug("parsing dict %s: %s", metric, value)
-            _parse_metrics(value, topic, client_id, f"{prefix}{metric}_", labels)
+            _parse_metrics(value, topic, original_topic, client_id, f"{prefix}{metric}_", labels)
             continue
 
         try:
@@ -217,13 +234,15 @@ def _parse_metrics(data, topic, client_id, prefix="", labels=None):
         prom_metric_name = _normalize_prometheus_metric_name(prom_metric_name)
         prom_metric_id = PromMetricId(prom_metric_name, label_keys)
         try:
-            _create_prometheus_metric(prom_metric_id)
+            _create_prometheus_metric(prom_metric_id, original_topic)
         except ValueError as error:
             LOG.error("unable to create prometheus metric '%s': %s", prom_metric_id, error)
             return
 
         # expose the sample to prometheus
-        _add_prometheus_sample(topic, prom_metric_id, metric_value, client_id, labels)
+        _add_prometheus_sample(
+            topic, original_topic, prom_metric_id, metric_value, client_id, labels
+        )
 
 
 def _normalize_name_in_topic_msg(topic, payload):
@@ -401,8 +420,47 @@ def _parse_properties(properties):
     }
 
 
+def _zigbee2mqtt_rename(msg):
+    # Remove old metrics following renaming
+
+    payload = json.loads(msg.payload)
+    old_topic = f"zigbee2mqtt/{payload['data']['from']}"
+    if old_topic not in metric_refs:
+        return
+
+    for sample in metric_refs[old_topic]:
+        try:
+            prom_metrics[sample[0]].remove(*sample[1].values())
+        except KeyError:
+            pass
+
+    del metric_refs[old_topic]
+
+    # Remove old availability metrics following renaming
+
+    if not settings.ZIGBEE2MQTT_AVAILABILITY:
+        return
+
+    old_topic_availability = f"{old_topic}{ZIGBEE2MQTT_AVAILABILITY_SUFFIX}"
+    if old_topic_availability not in metric_refs:
+        return
+
+    for sample in metric_refs[old_topic_availability]:
+        try:
+            prom_metrics[sample[0]].remove(*sample[1].values())
+        except KeyError:
+            pass
+
+    del metric_refs[old_topic_availability]
+
+
 def expose_metrics(_, userdata, msg):
     """Expose metrics to prometheus when a message has been published (callback)."""
+
+    if msg.topic.startswith("zigbee2mqtt/") and msg.topic.endswith("/rename"):
+        _zigbee2mqtt_rename(msg)
+        return
+
     for ignore in settings.IGNORED_TOPICS:
         if fnmatch.fnmatch(msg.topic, ignore):
             LOG.debug('Topic "%s" was ignored by entry "%s"', msg.topic, ignore)
@@ -420,7 +478,8 @@ def expose_metrics(_, userdata, msg):
         additional_labels = _parse_properties(msg.properties)
     else:
         additional_labels = {}
-    _parse_metrics(payload, topic, userdata["client_id"], labels=additional_labels)
+
+    _parse_metrics(payload, topic, msg.topic, userdata["client_id"], labels=additional_labels)
 
     # increment received message counter
     labels = {settings.TOPIC_LABEL: topic}
@@ -508,10 +567,11 @@ def main():
             REGISTRY.unregister(collector)
 
         print("## Debug ##\n")
+        original_topic = topic
         topic, payload = _parse_message(topic, payload)
         print(f"parsed to: {topic} {payload}")
 
-        _parse_metrics(payload, topic, "", labels=None)
+        _parse_metrics(payload, topic, original_topic, "", labels=None)
         print("\n## Result ##\n")
         print(str(generate_latest().decode("utf-8")))
     else:
