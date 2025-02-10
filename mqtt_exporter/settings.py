@@ -10,6 +10,8 @@ ZWAVE_TOPIC_PREFIX = os.getenv("ZWAVE_TOPIC_PREFIX", "zwave/")
 ESPHOME_TOPIC_PREFIXES = os.getenv("ESPHOME_TOPIC_PREFIXES", "").split(",")
 HUBITAT_TOPIC_PREFIXES = os.getenv("HUBITAT_TOPIC_PREFIXES", "hubitat/").split(",")
 EXPOSE_LAST_SEEN = os.getenv("EXPOSE_LAST_SEEN", "False") == "True"
+PARSE_MSG_PAYLOAD = os.getenv("PARSE_MSG_PAYLOAD", "True") == "True"
+
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
