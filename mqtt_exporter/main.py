@@ -479,7 +479,8 @@ def expose_metrics(_, userdata, msg):
     else:
         additional_labels = {}
 
-    _parse_metrics(payload, topic, msg.topic, userdata["client_id"], labels=additional_labels)
+    if settings.PARSE_MSG_PAYLOAD:
+        _parse_metrics(payload, topic, msg.topic, userdata["client_id"], labels=additional_labels)
 
     # increment received message counter
     labels = {settings.TOPIC_LABEL: topic}
