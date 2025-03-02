@@ -75,8 +75,9 @@ def subscribe(client, _, __, reason_code, properties):
 
     client.user_data_set(user_data)
 
-    LOG.info('subscribing to "%s"', settings.TOPIC)
-    client.subscribe(settings.TOPIC)
+    for s in settings.TOPIC.split(","):
+        LOG.info('subscribing to "%s"', s)
+        client.subscribe(s)
     if reason_code != mqtt.CONNACK_ACCEPTED:
         LOG.error("MQTT %s", mqtt.connack_string(reason_code))
 
