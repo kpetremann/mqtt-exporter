@@ -151,12 +151,14 @@ def _add_prometheus_sample(
     labels.update(additional_labels)
 
     prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
-    metric_refs[original_topic].append((prom_metric_id, labels))
+    if not (prom_metric_id, labels) not in metric_refs[original_topic]:
+        metric_refs[original_topic].append((prom_metric_id, labels))
 
     if settings.EXPOSE_LAST_SEEN:
         ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
         prom_metrics[ts_metric_id].labels(**labels).set(int(time.time()))
-        metric_refs[original_topic].append((ts_metric_id, labels))
+        if not (ts_metric_id, labels) not in metric_refs[original_topic]:
+            metric_refs[original_topic].append((ts_metric_id, labels))
 
     LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
