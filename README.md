@@ -4,7 +4,11 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![Build and publish docker images](https://github.com/kpetremann/mqtt-exporter/actions/workflows/release.yml/badge.svg)](https://hub.docker.com/r/kpetrem/mqtt-exporter)
+[![Build and publish docker images](https://github.com/kpetremann/mqtt-exporter/actions/workflows/docker-release.yml/badge.svg)](https://hub.docker.com/r/kpetrem/mqtt-exporter)
+
+[![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/kpetremann)
+
+<a href="https://www.buymeacoffee.com/kpetremann" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
 # MQTT-exporter
 
