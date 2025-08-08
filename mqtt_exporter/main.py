@@ -19,8 +19,8 @@ from prometheus_client import (
     Counter,
     Gauge,
     generate_latest,
-    metrics,
     start_http_server,
+    validation,
 )
 
 from mqtt_exporter import settings
@@ -87,7 +87,7 @@ def _normalize_prometheus_metric_name(prom_metric_name):
 
     https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
     """
-    if metrics.METRIC_NAME_RE.match(prom_metric_name):
+    if validation.METRIC_NAME_RE.match(prom_metric_name):
         return prom_metric_name
 
     # clean invalid characted
