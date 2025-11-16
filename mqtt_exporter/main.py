@@ -551,7 +551,8 @@ def run():
     client.loop_forever()
 
 
-def main():
+def main_mqtt_exporter():
+    """Main function of mqtt exporter"""
     parser = argparse.ArgumentParser(
         prog="MQTT-exporter",
         description="Simple generic MQTT Prometheus exporter for IoT working out of the box.",
@@ -583,4 +584,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_mqtt_exporter()
