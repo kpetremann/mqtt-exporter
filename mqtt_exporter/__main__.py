@@ -14,6 +14,5 @@ python -m mqtt_exporter
 
 from .main import main_mqtt_exporter
 
-
 if __name__ == "__main__":
     main_mqtt_exporter()
