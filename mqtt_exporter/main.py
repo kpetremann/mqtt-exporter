@@ -512,7 +512,20 @@ def run():
     if settings.MQTT_ENABLE_TLS:
         LOG.debug("Enabling TLS on MQTT client")
         ssl_context = ssl.create_default_context()
-        ssl_context.load_default_certs()
+
+        # custom CA support
+        if settings.MQTT_TLS_CA_CERT:
+            LOG.debug("loading custom CA certificate")
+            ssl_context.load_verify_locations(cafile=settings.MQTT_TLS_CA_CERT)
+        else:
+            ssl_context.load_default_certs()
+
+        # mTLS settings
+        if settings.MQTT_TLS_CLIENT_CERT and settings.MQTT_TLS_CLIENT_KEY:
+            LOG.debug("[mTLS] loading client certificate and key")
+            ssl_context.load_cert_chain(
+                certfile=settings.MQTT_TLS_CLIENT_CERT, keyfile=settings.MQTT_TLS_CLIENT_KEY
+            )
 
         if settings.MQTT_TLS_NO_VERIFY:
             LOG.debug("Not verifying MQTT certificate authority is trusted")

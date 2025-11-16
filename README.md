@@ -125,6 +125,11 @@ The list of parameters are:
   * `MQTT_V5_PROTOCOL`: Force to use MQTT protocol v5 instead of 3.1.1
   * `MQTT_CLIENT_ID`: Set client ID manually for MQTT connection
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
+  * `MQTT_ENABLE_TLS`: Enable TLS for MQTT connection (default: False)
+  * `MQTT_TLS_NO_VERIFY`: Disable TLS certificate verification (default: False)
+  * `MQTT_TLS_CA_CERT`: Path to custom CA certificate file for TLS (default: None, uses system CA)
+  * `MQTT_TLS_CLIENT_CERT`: Path to client certificate file for mTLS client authentication (default: None)
+  * `MQTT_TLS_CLIENT_KEY`: Path to client private key file for mTLS client authentication (default: None)
   * `PROMETHEUS_ADDRESS`: HTTP server address to expose Prometheus metrics on (default: 0.0.0.0)
   * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
   * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
