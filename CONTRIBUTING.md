@@ -19,7 +19,7 @@ Follow usual best practices:
 
 ## Dev environment
 
-You can install invoke package on your system and then use it to install environement, run an autoformat or just run the exporter:
+You can install invoke package on your system and then use it to install environment, run an autoformat or just run the exporter:
 
   * `invoke install`: to install virtualenv under .venv/ and install all dev requirements
   * `invoke reformat`: reformat using black and isort

@@ -90,7 +90,7 @@ def _normalize_prometheus_metric_name(prom_metric_name):
     if validation.METRIC_NAME_RE.match(prom_metric_name):
         return prom_metric_name
 
-    # clean invalid characted
+    # clean invalid characters
     prom_metric_name = re.sub(r"[^a-zA-Z0-9_:]", "", prom_metric_name)
 
     # ensure to start with valid character
@@ -363,8 +363,8 @@ def _parse_message(raw_topic, raw_payload):
     try:
         if not isinstance(raw_payload, str):
             raw_payload = raw_payload.decode(json.detect_encoding(raw_payload))
-    except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', raw_payload)
+    except UnicodeDecodeError as err:
+        LOG.debug('encountered undecodable payload: "%s" (%s)', raw_payload, err)
         return None, None
 
     if raw_payload in STATE_VALUES:
@@ -372,8 +372,8 @@ def _parse_message(raw_topic, raw_payload):
     else:
         try:
             payload = json.loads(raw_payload)
-        except json.JSONDecodeError:
-            LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
+        except json.JSONDecodeError as err:
+            LOG.debug('failed to parse payload as JSON: "%s" (%s)', raw_payload, err)
             return None, None
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
