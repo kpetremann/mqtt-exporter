@@ -24,6 +24,7 @@ from prometheus_client import (
 )
 
 from mqtt_exporter import settings
+from mqtt_exporter.exceptions import MaximumMetricReached
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
@@ -120,6 +121,11 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
 def _create_prometheus_metric(prom_metric_id, original_topic):
     """Create Prometheus metric if does not exist."""
     if not prom_metrics.get(prom_metric_id):
+        if settings.MAX_METRICS > 0 and len(prom_metrics) >= settings.MAX_METRICS:
+            raise MaximumMetricReached(
+                f"metric limit reached ({settings.MAX_METRICS}): cannot create new metric {prom_metric_id}"
+            )
+
         labels = [settings.TOPIC_LABEL]
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
@@ -238,7 +244,7 @@ def _parse_metrics(data, topic, original_topic, client_id, prefix="", labels=Non
         prom_metric_id = PromMetricId(prom_metric_name, label_keys)
         try:
             _create_prometheus_metric(prom_metric_id, original_topic)
-        except ValueError as error:
+        except (ValueError, MaximumMetricReached) as error:
             LOG.error("unable to create prometheus metric '%s': %s", prom_metric_id, error)
             return
 

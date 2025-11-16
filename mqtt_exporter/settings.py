@@ -11,6 +11,8 @@ ESPHOME_TOPIC_PREFIXES = os.getenv("ESPHOME_TOPIC_PREFIXES", "").split(",")
 HUBITAT_TOPIC_PREFIXES = os.getenv("HUBITAT_TOPIC_PREFIXES", "hubitat/").split(",")
 EXPOSE_LAST_SEEN = os.getenv("EXPOSE_LAST_SEEN", "False") == "True"
 PARSE_MSG_PAYLOAD = os.getenv("PARSE_MSG_PAYLOAD", "True") == "True"
+# 2000 is a very large number of metrics already, but should be high enough to avoid breaking users' setup
+MAX_METRICS = int(os.getenv("MAX_METRICS", "2000"))
 
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False") == "True"
