@@ -19,6 +19,9 @@ Tested with Mosquitto MQTT and Xiaomi sensors.
 
 It exposes metrics from MQTT message out of the box. You just need to specify the target if not on localhost.
 
+> [!IMPORTANT]
+> By default, it will expose up to 2000 metrics from MQTT. It can be configured via MAX_METRICS setting.
+
 MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric values.
 
 It also provides message counters for each MQTT topic:
