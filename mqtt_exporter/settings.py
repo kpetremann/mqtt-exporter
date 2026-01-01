@@ -1,6 +1,9 @@
 """Exporter configuration."""
 
+import logging
 import os
+
+LOG = logging.getLogger("mqtt-exporter")
 
 PREFIX = os.getenv("PROMETHEUS_PREFIX", "mqtt_")
 TOPIC_LABEL = os.getenv("TOPIC_LABEL", "topic")
@@ -35,3 +38,27 @@ PROMETHEUS_ADDRESS = os.getenv("PROMETHEUS_ADDRESS", "0.0.0.0")
 PROMETHEUS_PORT = int(os.getenv("PROMETHEUS_PORT", "9000"))
 
 KEEP_FULL_TOPIC = os.getenv("KEEP_FULL_TOPIC", "False").lower() == "true"
+
+# State value mappings - can be extended via STATE_VALUES environment variable
+# Format: "KEY1=VALUE1,KEY2=VALUE2" (e.g., "OPEN=1,CLOSED=0,LOCKED=1,UNLOCKED=0")
+DEFAULT_STATE_VALUES = {
+    "ON": 1,
+    "OFF": 0,
+    "TRUE": 1,
+    "FALSE": 0,
+    "ONLINE": 1,
+    "OFFLINE": 0,
+}
+
+# Parse custom state values from environment variable
+STATE_VALUES = DEFAULT_STATE_VALUES.copy()
+custom_states = os.getenv("STATE_VALUES", "")
+if custom_states:
+    try:
+        for pair in custom_states.split(","):
+            if "=" in pair:
+                key, value = pair.split("=", 1)
+                STATE_VALUES[key.strip().upper()] = float(value.strip())
+    except (ValueError, AttributeError) as e:
+        # Log warning but continue with defaults
+        LOG.warning("Failed to parse STATE_VALUES environment variable: %s", e)
