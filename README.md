@@ -144,6 +144,7 @@ The list of parameters are:
   * `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
   * `PARSE_MSG_PAYLOAD`: Enable parsing and metrics of the payload. (default: true)
   * `MAX_METRICS`: Maximum number of metrics to create. When limit is reached, new metrics will be ignored. Set to 0 for unlimited. (default: 2000)
+  * `STATE_VALUES`: Additional custom state value mappings (e.g., "OPEN=1,CLOSED=0,LOCKED=1,UNLOCKED=0"). These are merged with defaults: ON=1, OFF=0, TRUE=1, FALSE=0, ONLINE=1, OFFLINE=0 (default: "")
 
 ### Deployment
 
