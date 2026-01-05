@@ -144,6 +144,7 @@ The list of parameters are:
   * `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
   * `PARSE_MSG_PAYLOAD`: Enable parsing and metrics of the payload. (default: true)
   * `MAX_METRICS`: Maximum number of metrics to create. When limit is reached, new metrics will be ignored. Set to 0 for unlimited. (default: 2000)
+  * `METRIC_TIMEOUT`: Timeout in seconds for metrics. If a metric is not updated within this period, it will be dropped. Set to 0 to disable (default: 0)
 
 ### Deployment
 
