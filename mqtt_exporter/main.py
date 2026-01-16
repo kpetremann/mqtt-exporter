@@ -9,6 +9,7 @@ import re
 import signal
 import ssl
 import sys
+import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -49,6 +50,7 @@ class PromMetricId:
 # global variables
 metric_refs: dict[str, list[tuple]] = defaultdict(list)
 prom_metrics: dict[PromMetricId, Gauge] = {}
+metric_last_update: dict[tuple, float] = {}  # Track last update time for each metric
 prom_msg_counter = None
 
 
@@ -160,6 +162,11 @@ def _add_prometheus_sample(
     prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
     if not (prom_metric_id, labels) not in metric_refs[original_topic]:
         metric_refs[original_topic].append((prom_metric_id, labels))
+
+    # Track last update time for timeout functionality
+    if settings.METRIC_TIMEOUT > 0:
+        metric_key = (prom_metric_id, tuple(sorted(labels.items())))
+        metric_last_update[metric_key] = time.time()
 
     if settings.EXPOSE_LAST_SEEN:
         ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
@@ -499,6 +506,58 @@ def expose_metrics(_, userdata, msg):
     prom_msg_counter.labels(**labels).inc()
 
 
+def _cleanup_expired_metrics():
+    """Remove metrics that haven't been updated within the timeout period."""
+    if settings.METRIC_TIMEOUT <= 0:
+        return
+
+    current_time = time.time()
+    expired_metrics = []
+
+    # Find expired metrics
+    for metric_key, last_update in metric_last_update.items():
+        if current_time - last_update > settings.METRIC_TIMEOUT:
+            expired_metrics.append(metric_key)
+
+    # Remove expired metrics
+    for metric_key in expired_metrics:
+        prom_metric_id, labels_tuple = metric_key
+        labels = dict(labels_tuple)
+
+        try:
+            # Remove the metric sample
+            prom_metrics[prom_metric_id].remove(*labels.values())
+            LOG.info("Removed expired metric: %s with labels %s", prom_metric_id, labels)
+        except KeyError:
+            LOG.debug("Metric already removed: %s", prom_metric_id)
+
+        # Remove timestamp tracking
+        del metric_last_update[metric_key]
+
+        # Also remove the _ts metric if EXPOSE_LAST_SEEN is enabled
+        if settings.EXPOSE_LAST_SEEN:
+            ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+            try:
+                prom_metrics[ts_metric_id].remove(*labels.values())
+            except KeyError:
+                pass
+
+
+def _start_cleanup_thread():
+    """Start a background thread to periodically clean up expired metrics."""
+    if settings.METRIC_TIMEOUT <= 0:
+        return
+
+    def cleanup_loop():
+        while True:
+            time.sleep(min(settings.METRIC_TIMEOUT, 60))  # Check at least every minute
+            _cleanup_expired_metrics()
+
+    cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True, name="metric-cleanup")
+    cleanup_thread.start()
+    LOG.info("Started metric cleanup thread with timeout: %d seconds", settings.METRIC_TIMEOUT)
+
+
 def run():
     """Start the exporter."""
     if settings.MQTT_V5_PROTOCOL:
@@ -555,6 +614,9 @@ def run():
     _create_msg_counter_metrics()
     signal.signal(signal.SIGTERM, stop_request)
     signal.signal(signal.SIGINT, stop_request)
+
+    # start metric cleanup thread if timeout is configured
+    _start_cleanup_thread()
 
     # start prometheus server
     start_http_server(settings.PROMETHEUS_PORT, settings.PROMETHEUS_ADDRESS)

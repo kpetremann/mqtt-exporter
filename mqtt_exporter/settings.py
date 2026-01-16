@@ -13,6 +13,7 @@ EXPOSE_LAST_SEEN = os.getenv("EXPOSE_LAST_SEEN", "False").lower() == "true"
 PARSE_MSG_PAYLOAD = os.getenv("PARSE_MSG_PAYLOAD", "True").lower() == "true"
 # 2000 is a very large number of metrics already, but should be high enough to avoid breaking users' setup
 MAX_METRICS = int(os.getenv("MAX_METRICS", "2000"))
+METRIC_TIMEOUT = int(os.getenv("METRIC_TIMEOUT", "0"))  # 0 means no timeout
 
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False").lower() == "true"
