@@ -30,14 +30,6 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
 ZIGBEE2MQTT_AVAILABILITY_SUFFIX = "/availability"
-STATE_VALUES = {
-    "ON": 1,
-    "OFF": 0,
-    "TRUE": 1,
-    "FALSE": 0,
-    "ONLINE": 1,
-    "OFFLINE": 0,
-}
 
 
 @dataclass(frozen=True)
@@ -187,8 +179,8 @@ def _parse_metric(data):
         data = data.upper()
 
         # Handling of switch data where their state is reported as ON/OFF
-        if data in STATE_VALUES:
-            return STATE_VALUES[data]
+        if data in settings.STATE_VALUES:
+            return settings.STATE_VALUES[data]
 
         # Last ditch effort, we got a string, let's try to cast it
         return float(data)
@@ -373,8 +365,8 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable payload: "%s" (%s)', raw_payload, err)
         return None, None
 
-    if raw_payload in STATE_VALUES:
-        payload = STATE_VALUES[raw_payload]
+    if raw_payload in settings.STATE_VALUES:
+        payload = settings.STATE_VALUES[raw_payload]
     else:
         try:
             payload = json.loads(raw_payload)
