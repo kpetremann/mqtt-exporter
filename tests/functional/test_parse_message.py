@@ -198,3 +198,38 @@ def test__parse_message__hubitat_style():
 
     assert parsed_topic == "hubitat_hub1_some_room"
     assert parsed_payload == {"temperature": 20.0}
+
+
+def test__parse_message__meshtastic_style():
+    """Test message parsing with Meshtastic style.
+
+    It  looks like: msh/[region]/2/json/[channelname]/[userid]
+    """
+    topic = "msh/EU_868/2/json/LongFast/!ba0dd62c"
+    payload = """{
+        "channel": 0,
+        "from": 3121468972,
+        "hop_start": 3,
+        "hops_away": 0,
+        "id": 46252175,
+        "payload": { "air_util_tx": 0.559027791023254,
+            "battery_level": 101,
+            "channel_utilization": 4.56999969482422,
+            "uptime_seconds": 389180,
+            "voltage": 4.31599998474121 },
+        "sender": "!ba0dd62c",
+        "timestamp": 1763545627,
+        "to": 4294967295,
+        "type": "telemetry"
+    }"""
+
+    parsed_topic, parsed_payload = _parse_message(topic, payload)
+
+    assert parsed_topic == "eu_868_ba0dd62c_3121468972"
+    assert parsed_payload == {
+        "air_util_tx": 0.559027791023254,
+        "battery_level": 101,
+        "channel_utilization": 4.56999969482422,
+        "uptime_seconds": 389180,
+        "voltage": 4.31599998474121,
+    }

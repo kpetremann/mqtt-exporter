@@ -110,6 +110,14 @@ Topics look like `hubitat/<hubname>/<device>/attributes/<attribute>/value`.
 
 Like for ESPHome, `HUBITAT_TOPIC_PREFIXES` is a list with `,` as a separator.
 
+### Meshtastic
+
+Meshtastic is supported. By default all topic starting with `mesh/` will be identified and parsed as Meshtastic messages. It can be changed using `MESHTASTIC_TOPIC_PREFIX` environment variable.
+
+Topics look like `msh/[region]/2/json/[channelname]/[userid]`.
+
+Only JSON version is supported. See [https://meshtastic.org/docs/software/integrations/mqtt/#mqtt-topics]().
+
 ### Configuration
 
 Parameters are passed using environment variables.
@@ -139,6 +147,7 @@ The list of parameters are:
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
   * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
+  * `MESHTASTIC_TOPIC_PREFIX`: MQTT topic used for Meshtastic messages (default: msh/)
   * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for ESPHome messages (default: "")
   * `HUBITAT_TOPIC_PREFIXES`: MQTT topic used for Hubitat messages (default: "hubitat/")
   * `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
