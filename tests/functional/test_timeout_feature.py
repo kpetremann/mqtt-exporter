@@ -25,17 +25,17 @@ def cleanup_expired_metrics(timeout):
     """Simulate cleanup of expired metrics."""
     if timeout <= 0:
         return []
-    
+
     current_time = time.time()
     expired_metrics = []
-    
+
     for metric_key, last_update in metric_last_update.items():
         if current_time - last_update > timeout:
             expired_metrics.append(metric_key)
-    
+
     for metric_key in expired_metrics:
         del metric_last_update[metric_key]
-    
+
     return expired_metrics
 
 # Test the feature
@@ -79,4 +79,4 @@ expired = cleanup_expired_metrics(timeout=0)
 print(f"   Expired: {len(expired)} (expected: 0 - timeout disabled)")
 print(f"   Remaining: {len(metric_last_update)} (expected: 2)")
 
-print("\n✅ Test completed successfully!")
+print("\n✅ Test completed successfully!\n"
