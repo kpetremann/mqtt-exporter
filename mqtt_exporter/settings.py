@@ -26,6 +26,14 @@ MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", "60"))
 MQTT_USERNAME = os.getenv("MQTT_USERNAME")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
+MQTT_PASSWORD_FILE = os.getenv("MQTT_PASSWORD_FILE")
+
+if MQTT_PASSWORD_FILE:
+    if MQTT_PASSWORD:
+        raise ValueError("MQTT_PASSWORD_FILE is mutually exclusive with MQTT_PASSWORD")
+    with open(MQTT_PASSWORD_FILE, "r") as f:
+        MQTT_PASSWORD = f.read()
+
 MQTT_V5_PROTOCOL = os.getenv("MQTT_V5_PROTOCOL", "False").lower() == "true"
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "")
 MQTT_EXPOSE_CLIENT_ID = os.getenv("MQTT_EXPOSE_CLIENT_ID", "False").lower() == "true"

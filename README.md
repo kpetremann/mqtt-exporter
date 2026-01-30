@@ -124,7 +124,8 @@ The list of parameters are:
   * `MQTT_TOPIC`: Comma-separated lists of topics to subscribe to (default: #)
   * `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
   * `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
-  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
+  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD_FILE`.
+  * `MQTT_PASSWORD_FILE`: File containing password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD`.
   * `MQTT_V5_PROTOCOL`: Force to use MQTT protocol v5 instead of 3.1.1
   * `MQTT_CLIENT_ID`: Set client ID manually for MQTT connection
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
