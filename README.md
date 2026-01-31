@@ -63,7 +63,7 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 
 ### Zigbee2MQTT device availability support
 
-**Important notice: legacy availability payload is not supported and must be disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
+**Important notice: legacy availability payload is not supported and must be disabled** - this legacy feature was removed in zigbee2mqtt v2. See [`advanced.legacy_availability_payload`](https://github.com/Koenkk/zigbee2mqtt.io/blob/6d62760660b7a98b95539af82d46ac6bf03d688a/docs/guide/configuration/device-availability.md) if you're on an older version of zigbee2mqtt.
 
 When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
 
