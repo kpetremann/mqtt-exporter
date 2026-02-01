@@ -1,6 +1,6 @@
 [project]
 name = "mqtt-exporter"
-version = "1.7.1"
+version = "1.9.0"
 description = "Simple generic MQTT Prometheus exporter for IoT working out of the box"
 readme = "README.md"
 license = { text = "MIT License" }
@@ -25,7 +25,7 @@ dependencies = { file = ["requirements/base.txt"] }
 Homepage = "https://github.com/kpetremann/mqtt-exporter"
 
 [project.scripts]
-mqtt-exporter = "mqtt_exporter.main:main"
+mqtt-exporter = "mqtt_exporter.main:main_mqtt_exporter"
 
 [tool.setuptools]
 packages = ["mqtt_exporter"]

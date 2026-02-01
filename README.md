@@ -19,6 +19,9 @@ Tested with Mosquitto MQTT and Xiaomi sensors.
 
 It exposes metrics from MQTT message out of the box. You just need to specify the target if not on localhost.
 
+> [!IMPORTANT]
+> By default, it will expose up to 2000 metrics from MQTT. It can be configured via MAX_METRICS setting.
+
 MQTT-exporter expects a topic and a flat JSON payload, the value must be numeric values.
 
 It also provides message counters for each MQTT topic:
@@ -60,7 +63,7 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 
 ### Zigbee2MQTT device availability support
 
-**Important notice: legacy availability payload is not supported and must be disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
+**Important notice: legacy availability payload is not supported and must be disabled** - this legacy feature was removed in zigbee2mqtt v2. See [`advanced.legacy_availability_payload`](https://github.com/Koenkk/zigbee2mqtt.io/blob/6d62760660b7a98b95539af82d46ac6bf03d688a/docs/guide/configuration/device-availability.md) if you're on an older version of zigbee2mqtt.
 
 When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
 
@@ -121,10 +124,16 @@ The list of parameters are:
   * `MQTT_TOPIC`: Comma-separated lists of topics to subscribe to (default: #)
   * `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
   * `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
-  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
+  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD_FILE`.
+  * `MQTT_PASSWORD_FILE`: File containing password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD`.
   * `MQTT_V5_PROTOCOL`: Force to use MQTT protocol v5 instead of 3.1.1
   * `MQTT_CLIENT_ID`: Set client ID manually for MQTT connection
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
+  * `MQTT_ENABLE_TLS`: Enable TLS for MQTT connection (default: False)
+  * `MQTT_TLS_NO_VERIFY`: Disable TLS certificate verification (default: False)
+  * `MQTT_TLS_CA_CERT`: Path to custom CA certificate file for TLS (default: None, uses system CA)
+  * `MQTT_TLS_CLIENT_CERT`: Path to client certificate file for mTLS client authentication (default: None)
+  * `MQTT_TLS_CLIENT_KEY`: Path to client private key file for mTLS client authentication (default: None)
   * `PROMETHEUS_ADDRESS`: HTTP server address to expose Prometheus metrics on (default: 0.0.0.0)
   * `PROMETHEUS_PORT`: HTTP server PORT to expose Prometheus metrics (default: 9000)
   * `PROMETHEUS_PREFIX`: Prefix added to the metric name, example: mqtt_temperature (default: mqtt_)
@@ -139,6 +148,8 @@ The list of parameters are:
   * `PROMETHEUS_CERT_KEY`: Key file for the certificate. Note: you must specify both _CERT and _CERT_KEY, otherwise it will use plain http. (default: None)
   * `PROMETHEUS_CA`: File for a custom root CA to use. (default: None)
   * `PROMETHEUS_CA_DIR`: Path to a directory with CA certificates to use. (default: None)
+  * `MAX_METRICS`: Maximum number of metrics to create. When limit is reached, new metrics will be ignored. Set to 0 for unlimited. (default: 2000)
+  * `STATE_VALUES`: Additional custom state value mappings (e.g., "OPEN=1,CLOSED=0,LOCKED=1,UNLOCKED=0"). These are merged with defaults: ON=1, OFF=0, TRUE=1, FALSE=0, ONLINE=1, OFFLINE=0 (default: "")
 
 ### Deployment
 

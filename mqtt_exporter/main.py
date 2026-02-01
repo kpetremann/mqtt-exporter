@@ -19,24 +19,17 @@ from prometheus_client import (
     Counter,
     Gauge,
     generate_latest,
-    metrics,
     start_http_server,
+    validation,
 )
 
 from mqtt_exporter import settings
+from mqtt_exporter.exceptions import MaximumMetricReached
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
 ZIGBEE2MQTT_AVAILABILITY_SUFFIX = "/availability"
-STATE_VALUES = {
-    "ON": 1,
-    "OFF": 0,
-    "TRUE": 1,
-    "FALSE": 0,
-    "ONLINE": 1,
-    "OFFLINE": 0,
-}
 
 
 @dataclass(frozen=True)
@@ -87,10 +80,10 @@ def _normalize_prometheus_metric_name(prom_metric_name):
 
     https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
     """
-    if metrics.METRIC_NAME_RE.match(prom_metric_name):
+    if validation.METRIC_NAME_RE.match(prom_metric_name):
         return prom_metric_name
 
-    # clean invalid characted
+    # clean invalid characters
     prom_metric_name = re.sub(r"[^a-zA-Z0-9_:]", "", prom_metric_name)
 
     # ensure to start with valid character
@@ -120,6 +113,11 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
 def _create_prometheus_metric(prom_metric_id, original_topic):
     """Create Prometheus metric if does not exist."""
     if not prom_metrics.get(prom_metric_id):
+        if settings.MAX_METRICS > 0 and len(prom_metrics) >= settings.MAX_METRICS:
+            raise MaximumMetricReached(
+                f"metric limit reached ({settings.MAX_METRICS}): cannot create new metric {prom_metric_id}"
+            )
+
         labels = [settings.TOPIC_LABEL]
         if settings.MQTT_EXPOSE_CLIENT_ID:
             labels.append("client_id")
@@ -181,8 +179,8 @@ def _parse_metric(data):
         data = data.upper()
 
         # Handling of switch data where their state is reported as ON/OFF
-        if data in STATE_VALUES:
-            return STATE_VALUES[data]
+        if data in settings.STATE_VALUES:
+            return settings.STATE_VALUES[data]
 
         # Last ditch effort, we got a string, let's try to cast it
         return float(data)
@@ -238,7 +236,7 @@ def _parse_metrics(data, topic, original_topic, client_id, prefix="", labels=Non
         prom_metric_id = PromMetricId(prom_metric_name, label_keys)
         try:
             _create_prometheus_metric(prom_metric_id, original_topic)
-        except ValueError as error:
+        except (ValueError, MaximumMetricReached) as error:
             LOG.error("unable to create prometheus metric '%s': %s", prom_metric_id, error)
             return
 
@@ -363,17 +361,17 @@ def _parse_message(raw_topic, raw_payload):
     try:
         if not isinstance(raw_payload, str):
             raw_payload = raw_payload.decode(json.detect_encoding(raw_payload))
-    except UnicodeDecodeError:
-        LOG.debug('encountered undecodable payload: "%s"', raw_payload)
+    except UnicodeDecodeError as err:
+        LOG.debug('encountered undecodable payload: "%s" (%s)', raw_payload, err)
         return None, None
 
-    if raw_payload in STATE_VALUES:
-        payload = STATE_VALUES[raw_payload]
+    if raw_payload in settings.STATE_VALUES:
+        payload = settings.STATE_VALUES[raw_payload]
     else:
         try:
             payload = json.loads(raw_payload)
-        except json.JSONDecodeError:
-            LOG.debug('failed to parse payload as JSON: "%s"', raw_payload)
+        except json.JSONDecodeError as err:
+            LOG.debug('failed to parse payload as JSON: "%s" (%s)', raw_payload, err)
             return None, None
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
@@ -512,7 +510,20 @@ def run():
     if settings.MQTT_ENABLE_TLS:
         LOG.debug("Enabling TLS on MQTT client")
         ssl_context = ssl.create_default_context()
-        ssl_context.load_default_certs()
+
+        # custom CA support
+        if settings.MQTT_TLS_CA_CERT:
+            LOG.debug("loading custom CA certificate")
+            ssl_context.load_verify_locations(cafile=settings.MQTT_TLS_CA_CERT)
+        else:
+            ssl_context.load_default_certs()
+
+        # mTLS settings
+        if settings.MQTT_TLS_CLIENT_CERT and settings.MQTT_TLS_CLIENT_KEY:
+            LOG.debug("[mTLS] loading client certificate and key")
+            ssl_context.load_cert_chain(
+                certfile=settings.MQTT_TLS_CLIENT_CERT, keyfile=settings.MQTT_TLS_CLIENT_KEY
+            )
 
         if settings.MQTT_TLS_NO_VERIFY:
             LOG.debug("Not verifying MQTT certificate authority is trusted")
@@ -553,7 +564,8 @@ def run():
     client.loop_forever()
 
 
-def main():
+def main_mqtt_exporter():
+    """Main function of mqtt exporter"""
     parser = argparse.ArgumentParser(
         prog="MQTT-exporter",
         description="Simple generic MQTT Prometheus exporter for IoT working out of the box.",
@@ -585,4 +597,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_mqtt_exporter()

@@ -41,9 +41,23 @@ spec:
             - name: MQTT_ADDRESS
               value: {{ .Values.mqttExporter.mqtt.connection.address | quote }}
             - name: MQTT_USERNAME
+              {{- if .Values.mqttExporter.mqtt.connection.authentication.secretName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mqttExporter.mqtt.connection.authentication.secretName }}
+                  key: {{ .Values.mqttExporter.mqtt.connection.authentication.usernameKey | default "username" }}
+              {{- else }}
               value: {{ .Values.mqttExporter.mqtt.connection.authentication.username | quote }}
+              {{- end }}
             - name: MQTT_PASSWORD
+              {{- if .Values.mqttExporter.mqtt.connection.authentication.secretName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mqttExporter.mqtt.connection.authentication.secretName }}
+                  key: {{ .Values.mqttExporter.mqtt.connection.authentication.passwordKey | default "password" }}
+              {{- else }}
               value: {{ .Values.mqttExporter.mqtt.connection.authentication.password | quote }}
+              {{- end }}
             - name: MQTT_TLS_NO_VERIFY
               value: {{ .Values.mqttExporter.mqtt.connection.tls.noVerify | quote }}
             - name: MQTT_ENABLE_TLS
