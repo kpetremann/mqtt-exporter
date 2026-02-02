@@ -38,8 +38,6 @@ spec:
               value: {{ .Values.mqttExporter.mqtt.connection.address | quote }}
             - name: MQTT_PORT
               value: {{ .Values.mqttExporter.mqtt.connection.port | quote }}
-            - name: MQTT_ADDRESS
-              value: {{ .Values.mqttExporter.mqtt.connection.address | quote }}
             - name: MQTT_USERNAME
               {{- if .Values.mqttExporter.mqtt.connection.authentication.secretName }}
               valueFrom:
