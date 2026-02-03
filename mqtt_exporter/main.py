@@ -339,6 +339,29 @@ def _normalize_hubitat_format(topic, payload):
     return topic, payload_dict
 
 
+def _normalize_meshtastic_format(topic, payload):
+    """Normalize Meshtastic message.
+
+    i.e. msh/EU_868/2/json/LongFast/!ba0dd62c
+    doc: https://meshtastic.org/docs/software/integrations/mqtt/#mqtt-topics
+    """
+    if "from" not in payload:
+        LOG.warning("missing 'from' in meshtastic payload")
+        return topic, payload
+
+    if "json" not in topic:
+        LOG.warning("Meshtastic protobuf not supported")
+        return topic, payload
+
+    info = topic.split("/")
+    if len(info) == 6:
+        topic = f"{info[1].lower()}_{info[5].lower().strip('!')}"
+
+    topic = f"{topic}/{payload['from']}"
+    payload = payload["payload"]
+    return topic, payload
+
+
 def _is_esphome_topic(topic):
     for prefix in settings.ESPHOME_TOPIC_PREFIXES:
         if prefix and topic.startswith(prefix):
@@ -376,6 +399,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif raw_topic.startswith(settings.MESHTASTIC_TOPIC_PREFIX):
+        topic, payload = _normalize_meshtastic_format(raw_topic, payload)
     elif _is_hubitat_topic(raw_topic):
         topic, payload = _normalize_hubitat_format(raw_topic, payload)
     elif _is_esphome_topic(raw_topic):

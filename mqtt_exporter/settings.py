@@ -10,6 +10,7 @@ TOPIC_LABEL = os.getenv("TOPIC_LABEL", "topic")
 TOPIC = os.getenv("MQTT_TOPIC", "#")
 IGNORED_TOPICS = os.getenv("MQTT_IGNORED_TOPICS", "").split(",")
 ZWAVE_TOPIC_PREFIX = os.getenv("ZWAVE_TOPIC_PREFIX", "zwave/")
+MESHTASTIC_TOPIC_PREFIX = os.getenv("MESHTASTIC_TOPIC_PREFIX", "msh/")
 ESPHOME_TOPIC_PREFIXES = os.getenv("ESPHOME_TOPIC_PREFIXES", "").split(",")
 HUBITAT_TOPIC_PREFIXES = os.getenv("HUBITAT_TOPIC_PREFIXES", "hubitat/").split(",")
 EXPOSE_LAST_SEEN = os.getenv("EXPOSE_LAST_SEEN", "False").lower() == "true"
