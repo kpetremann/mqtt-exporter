@@ -85,6 +85,17 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+route:
+  main:
+    enabled: false
+    hostnames:
+      - mqtt-exporter.example.com
+    parentRefs:
+      # - name: cilium-gateway
+      #   group: gateway.networking.k8s.io
+      #   kind: Gateway
+      #   namespace: kube-system
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
