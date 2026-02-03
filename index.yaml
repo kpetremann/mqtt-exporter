@@ -3,6 +3,17 @@ entries:
   mqtt-exporter:
   - apiVersion: v2
     appVersion: latest
+    created: "2026-02-03T17:33:43.838899573Z"
+    description: A Helm chart for the converting and exporting MQTT topics to Prometheus
+      metrics
+    digest: 165f51a0c16a05c01f755c24b4019664096cd771c0e77e621525de84228d3371
+    name: mqtt-exporter
+    type: application
+    urls:
+    - https://github.com/kpetremann/mqtt-exporter/releases/download/mqtt-exporter-0.1.2/mqtt-exporter-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: latest
     created: "2025-03-13T19:50:22.825677377Z"
     description: A Helm chart for the converting and exporting MQTT topics to Prometheus
       metrics
@@ -12,4 +23,4 @@ entries:
     urls:
     - https://github.com/kpetremann/mqtt-exporter/releases/download/mqtt-exporter-0.1.1/mqtt-exporter-0.1.1.tgz
     version: 0.1.1
-generated: "2025-03-13T19:50:22.82568418Z"
+generated: "2026-02-03T17:33:43.838907465Z"
