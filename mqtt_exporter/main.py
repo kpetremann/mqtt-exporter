@@ -581,7 +581,7 @@ def run():
         keyfile=settings.PROMETHEUS_CERT_KEY,
         client_cafile=settings.PROMETHEUS_CA,
         client_capath=settings.PROMETHEUS_CA_DIR,
-        )
+    )
 
     # define mqtt client
     client.on_connect = subscribe
