@@ -574,9 +574,12 @@ def run():
     signal.signal(signal.SIGINT, stop_request)
 
     # start prometheus server
-    start_http_server(settings.PROMETHEUS_PORT, settings.PROMETHEUS_ADDRESS, \
-        certfile = settings.PROMETHEUS_CERT, keyfile = settings.PROMETHEUS_CERT_KEY, \
-        client_cafile = settings.PROMETHEUS_CA, client_capath = settings.PROMETHEUS_CA_DIR)
+    start_http_server(settings.PROMETHEUS_PORT,
+        settings.PROMETHEUS_ADDRESS,
+        certfile = settings.PROMETHEUS_CERT,
+        keyfile = settings.PROMETHEUS_CERT_KEY,
+        client_cafile = settings.PROMETHEUS_CA,
+        client_capath = settings.PROMETHEUS_CA_DIR)
 
     # define mqtt client
     client.on_connect = subscribe
