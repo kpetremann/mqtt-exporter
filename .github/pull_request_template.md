@@ -16,3 +16,12 @@ Fixes/Implement: #
 
 <!-- When relevant, please provide output, screenshot or example after the change -->
 ...
+
+**AI usage disclosure:**
+
+<!-- Please disclose any use of AI tools for this pull request. -->
+
+- Usage (e.g. minor suggestions, partial code, majority of implementation): 
+- Estimated percentage of AI-generated content (e.g. everything, major part, minor part, none): 
+
+This helps maintain transparency and review quality.
