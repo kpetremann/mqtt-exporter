@@ -60,6 +60,8 @@ spec:
               value: {{ .Values.mqttExporter.mqtt.connection.tls.noVerify | quote }}
             - name: MQTT_ENABLE_TLS
               value: {{ .Values.mqttExporter.mqtt.connection.tls.enable | quote }}
+            - name: MQTT_IGNORED_TOPICS
+              value: {{ join "," .Values.mqttExporter.mqtt.ignored_topics | default "" | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.mqttExporter.log.level | quote }}
           securityContext:
