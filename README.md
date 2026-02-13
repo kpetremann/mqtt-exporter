@@ -157,6 +157,7 @@ The list of parameters are:
   * `PROMETHEUS_CA`: File for a custom root CA to use. (default: None)
   * `PROMETHEUS_CA_DIR`: Path to a directory with CA certificates to use. (default: None)
   * `MAX_METRICS`: Maximum number of metrics to create. When limit is reached, new metrics will be ignored. Set to 0 for unlimited. (default: 2000)
+  * `METRIC_TIMEOUT`: Timeout in seconds for metrics. If a metric is not updated within this period, it will be dropped. Set to 0 to disable (default: 0)
   * `STATE_VALUES`: Additional custom state value mappings (e.g., "OPEN=1,CLOSED=0,LOCKED=1,UNLOCKED=0"). These are merged with defaults: ON=1, OFF=0, TRUE=1, FALSE=0, ONLINE=1, OFFLINE=0 (default: "")
 
 ### Deployment
