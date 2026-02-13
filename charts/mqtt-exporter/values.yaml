@@ -18,6 +18,11 @@ mqttExporter:
       authentication:
         username: username
         password: password
+        # Optional: Reference an existing Kubernetes Secret for credentials
+        # When secretName is set, username/password values above are ignored
+        # secretName: mqtt-credentials
+        # usernameKey: username
+        # passwordKey: password
       tls:
         enable: false
         verify: true

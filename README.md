@@ -1,6 +1,5 @@
 ![CI](https://github.com/kpetremann/mqtt-exporter/actions/workflows/ci.yml/badge.svg)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/b1ca990b576342a48d771d472e64bc24)](https://www.codacy.com/app/kpetremann/mqtt-exporter?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kpetremann/mqtt-exporter&amp;utm_campaign=Badge_Grade)
-[![Maintainability](https://api.codeclimate.com/v1/badges/635c98a1b4701d1ab4cf/maintainability)](https://codeclimate.com/github/kpetremann/mqtt-exporter/maintainability)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -63,7 +62,7 @@ mqtt_humidity{topic="zigbee2mqtt_0x00157d00032b1234"} 45.37
 
 ### Zigbee2MQTT device availability support
 
-**Important notice: legacy availability payload is not supported and must be disabled** - see [Device availability advanced](https://www.zigbee2mqtt.io/guide/configuration/device-availability.html#availability-payload)
+**Important notice: legacy availability payload is not supported and must be disabled** - this legacy feature was removed in zigbee2mqtt v2. See [`advanced.legacy_availability_payload`](https://github.com/Koenkk/zigbee2mqtt.io/blob/6d62760660b7a98b95539af82d46ac6bf03d688a/docs/guide/configuration/device-availability.md) if you're on an older version of zigbee2mqtt.
 
 When exposing device availability, Zigbee2MQTT add /availability suffix in the topic. So we end up with inconsistent metrics:
 
@@ -110,6 +109,14 @@ Topics look like `hubitat/<hubname>/<device>/attributes/<attribute>/value`.
 
 Like for ESPHome, `HUBITAT_TOPIC_PREFIXES` is a list with `,` as a separator.
 
+### Meshtastic
+
+Meshtastic is supported. By default all topic starting with `mesh/` will be identified and parsed as Meshtastic messages. It can be changed using `MESHTASTIC_TOPIC_PREFIX` environment variable.
+
+Topics look like `msh/[region]/2/json/[channelname]/[userid]`.
+
+Only JSON version is supported. See [https://meshtastic.org/docs/software/integrations/mqtt/#mqtt-topics]().
+
 ### Configuration
 
 Parameters are passed using environment variables.
@@ -124,7 +131,8 @@ The list of parameters are:
   * `MQTT_TOPIC`: Comma-separated lists of topics to subscribe to (default: #)
   * `MQTT_KEEPALIVE`: Keep alive interval to maintain connection with MQTT broker (default: 60)
   * `MQTT_USERNAME`: Username which should be used to authenticate against the MQTT broker (default: None)
-  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None)
+  * `MQTT_PASSWORD`: Password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD_FILE`.
+  * `MQTT_PASSWORD_FILE`: File containing password which should be used to authenticate against the MQTT broker (default: None). Mutually exclusive with `MQTT_PASSWORD`.
   * `MQTT_V5_PROTOCOL`: Force to use MQTT protocol v5 instead of 3.1.1
   * `MQTT_CLIENT_ID`: Set client ID manually for MQTT connection
   * `MQTT_EXPOSE_CLIENT_ID`: Expose the client ID as a label in Prometheus metrics
@@ -139,12 +147,18 @@ The list of parameters are:
   * `TOPIC_LABEL`: Define the Prometheus label for the topic, example temperature{topic="device1"} (default: topic)
   * `ZIGBEE2MQTT_AVAILABILITY`: Normalize sensor name for device availability metric added by Zigbee2MQTT (default: False)
   * `ZWAVE_TOPIC_PREFIX`: MQTT topic used for Zwavejs2Mqtt messages (default: zwave/)
+  * `MESHTASTIC_TOPIC_PREFIX`: MQTT topic used for Meshtastic messages (default: msh/)
   * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for ESPHome messages (default: "")
   * `HUBITAT_TOPIC_PREFIXES`: MQTT topic used for Hubitat messages (default: "hubitat/")
   * `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
   * `PARSE_MSG_PAYLOAD`: Enable parsing and metrics of the payload. (default: true)
+  * `PROMETHEUS_CERT`: Certificate to use for HTTPS. (default: None)
+  * `PROMETHEUS_CERT_KEY`: Key file for the certificate. Note: you must specify both _CERT and _CERT_KEY, otherwise it will use plain http. (default: None)
+  * `PROMETHEUS_CA`: File for a custom root CA to use. (default: None)
+  * `PROMETHEUS_CA_DIR`: Path to a directory with CA certificates to use. (default: None)
   * `MAX_METRICS`: Maximum number of metrics to create. When limit is reached, new metrics will be ignored. Set to 0 for unlimited. (default: 2000)
   * `METRIC_TIMEOUT`: Timeout in seconds for metrics. If a metric is not updated within this period, it will be dropped. Set to 0 to disable (default: 0)
+  * `STATE_VALUES`: Additional custom state value mappings (e.g., "OPEN=1,CLOSED=0,LOCKED=1,UNLOCKED=0"). These are merged with defaults: ON=1, OFF=0, TRUE=1, FALSE=0, ONLINE=1, OFFLINE=0 (default: "")
 
 ### Deployment
 

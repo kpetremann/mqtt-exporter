@@ -31,14 +31,6 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 LOG = logging.getLogger("mqtt-exporter")
 
 ZIGBEE2MQTT_AVAILABILITY_SUFFIX = "/availability"
-STATE_VALUES = {
-    "ON": 1,
-    "OFF": 0,
-    "TRUE": 1,
-    "FALSE": 0,
-    "ONLINE": 1,
-    "OFFLINE": 0,
-}
 
 
 @dataclass(frozen=True)
@@ -194,8 +186,8 @@ def _parse_metric(data):
         data = data.upper()
 
         # Handling of switch data where their state is reported as ON/OFF
-        if data in STATE_VALUES:
-            return STATE_VALUES[data]
+        if data in settings.STATE_VALUES:
+            return settings.STATE_VALUES[data]
 
         # Last ditch effort, we got a string, let's try to cast it
         return float(data)
@@ -354,6 +346,29 @@ def _normalize_hubitat_format(topic, payload):
     return topic, payload_dict
 
 
+def _normalize_meshtastic_format(topic, payload):
+    """Normalize Meshtastic message.
+
+    i.e. msh/EU_868/2/json/LongFast/!ba0dd62c
+    doc: https://meshtastic.org/docs/software/integrations/mqtt/#mqtt-topics
+    """
+    if "from" not in payload:
+        LOG.warning("missing 'from' in meshtastic payload")
+        return topic, payload
+
+    if "json" not in topic:
+        LOG.warning("Meshtastic protobuf not supported")
+        return topic, payload
+
+    info = topic.split("/")
+    if len(info) == 6:
+        topic = f"{info[1].lower()}_{info[5].lower().strip('!')}"
+
+    topic = f"{topic}/{payload['from']}"
+    payload = payload["payload"]
+    return topic, payload
+
+
 def _is_esphome_topic(topic):
     for prefix in settings.ESPHOME_TOPIC_PREFIXES:
         if prefix and topic.startswith(prefix):
@@ -380,8 +395,8 @@ def _parse_message(raw_topic, raw_payload):
         LOG.debug('encountered undecodable payload: "%s" (%s)', raw_payload, err)
         return None, None
 
-    if raw_payload in STATE_VALUES:
-        payload = STATE_VALUES[raw_payload]
+    if raw_payload in settings.STATE_VALUES:
+        payload = settings.STATE_VALUES[raw_payload]
     else:
         try:
             payload = json.loads(raw_payload)
@@ -391,6 +406,8 @@ def _parse_message(raw_topic, raw_payload):
 
     if raw_topic.startswith(settings.ZWAVE_TOPIC_PREFIX):
         topic, payload = _normalize_zwave2mqtt_format(raw_topic, payload)
+    elif raw_topic.startswith(settings.MESHTASTIC_TOPIC_PREFIX):
+        topic, payload = _normalize_meshtastic_format(raw_topic, payload)
     elif _is_hubitat_topic(raw_topic):
         topic, payload = _normalize_hubitat_format(raw_topic, payload)
     elif _is_esphome_topic(raw_topic):
@@ -619,7 +636,14 @@ def run():
     _start_cleanup_thread()
 
     # start prometheus server
-    start_http_server(settings.PROMETHEUS_PORT, settings.PROMETHEUS_ADDRESS)
+    start_http_server(
+        settings.PROMETHEUS_PORT,
+        settings.PROMETHEUS_ADDRESS,
+        certfile=settings.PROMETHEUS_CERT,
+        keyfile=settings.PROMETHEUS_CERT_KEY,
+        client_cafile=settings.PROMETHEUS_CA,
+        client_capath=settings.PROMETHEUS_CA_DIR,
+    )
 
     # define mqtt client
     client.on_connect = subscribe
