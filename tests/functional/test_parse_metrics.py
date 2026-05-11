@@ -26,6 +26,8 @@ def test_parse_metrics__nested_with_dash_in_metric_name():
 def test_metrics_escaping():
     """Verify that all keys are escaped properly."""
     main.prom_metrics = {}
+    main.last_seen.clear()
+    main.metric_refs.clear()
     original_topic = "test/topic"
     parsed_topic = "test_topic"
     parsed_payload = {
@@ -44,6 +46,8 @@ def test_metrics_escaping():
 def test_parse_metrics__value_is_list():
     """Verify if list recursion works properly."""
     main.prom_metrics = {}
+    main.last_seen.clear()
+    main.metric_refs.clear()
     original_topic = "test/topic"
     parsed_topic = "test_topic"
     parsed_payload = {"test_value": [1, 2]}

@@ -29,6 +29,11 @@ mqttExporter:
   prometheus:
     prefix: mqtt_
     topic_label: topic
+  # Optional: remove stale payload metrics (see README MQTT_METRICS_EXPIRE_SECONDS).
+  # When null/omitted, the exporter does not expire metrics.
+  metrics:
+    expire_seconds: null
+    expire_interval_seconds: null
 
 image:
   repository: kpetrem/mqtt-exporter

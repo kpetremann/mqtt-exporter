@@ -15,6 +15,8 @@ def _reset():
     for collector in collectors:
         prometheus_client.REGISTRY.unregister(collector)
     main.prom_metrics = {}
+    main.last_seen.clear()
+    main.metric_refs.clear()
 
 
 def test_max_metrics__unlimited(mocker):
