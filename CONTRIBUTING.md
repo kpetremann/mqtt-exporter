@@ -1,5 +1,17 @@
 # Developer guide
 
+## AI usage
+
+Any AI usage must be disclosed in the Pull Request, including:
+- Usage (e.g. minor suggestions, partial code, majority of implementation): 
+- Estimated percentage of AI-generated content (e.g. everything, major part, minor part, none)
+
+The contributor:
+- Must ensure the quality of provided of the code is good, and must have been tested prior being pushed.
+- Must be able to understand the code changes. **Purely vibe coded contribution without real developer experience is forbidden.**
+
+This helps maintain transparency and review quality.
+
 ## Requirements
 
 Please add/adapt **unit tests** for new features or bug fixes.
