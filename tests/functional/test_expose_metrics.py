@@ -13,13 +13,15 @@ def _reset():
     collectors = list(prometheus_client.REGISTRY._collector_to_names.keys())
     for collector in collectors:
         prometheus_client.REGISTRY.unregister(collector)
+    main.prom_metrics = {}
+    main.last_seen.clear()
+    main.metric_refs.clear()
 
 
 def _exec(client_id, mocker, added_labels):
     _reset()
     settings.MQTT_CLIENT_ID = client_id
     main._create_msg_counter_metrics()
-    main.prom_metrics = {}
     userdata = {"client_id": client_id}
     msg = mocker.Mock()
     msg.topic = "zigbee2mqtt/garage"

@@ -18,6 +18,37 @@ PARSE_MSG_PAYLOAD = os.getenv("PARSE_MSG_PAYLOAD", "True").lower() == "true"
 # 2000 is a very large number of metrics already, but should be high enough to avoid breaking users' setup
 MAX_METRICS = int(os.getenv("MAX_METRICS", "2000"))
 
+# Remove Prometheus time series for MQTT payload metrics after this many seconds without an
+# update. Disabled when unset, empty, zero, or invalid (see README).
+_metrics_expire_raw = os.getenv("MQTT_METRICS_EXPIRE_SECONDS", "").strip()
+MQTT_METRICS_EXPIRE_SECONDS: int | None
+try:
+    if not _metrics_expire_raw or int(_metrics_expire_raw) <= 0:
+        MQTT_METRICS_EXPIRE_SECONDS = None
+    else:
+        MQTT_METRICS_EXPIRE_SECONDS = int(_metrics_expire_raw)
+except ValueError:
+    LOG.warning(
+        "Invalid MQTT_METRICS_EXPIRE_SECONDS=%r; metric expiry disabled.",
+        _metrics_expire_raw,
+    )
+    MQTT_METRICS_EXPIRE_SECONDS = None
+
+_metrics_expire_interval_raw = os.getenv("MQTT_METRICS_EXPIRE_INTERVAL_SECONDS", "").strip()
+MQTT_METRICS_EXPIRE_INTERVAL_SECONDS: int | None
+try:
+    if not _metrics_expire_interval_raw:
+        MQTT_METRICS_EXPIRE_INTERVAL_SECONDS = None
+    else:
+        v_interval = int(_metrics_expire_interval_raw)
+        MQTT_METRICS_EXPIRE_INTERVAL_SECONDS = v_interval if v_interval > 0 else None
+except ValueError:
+    LOG.warning(
+        "Invalid MQTT_METRICS_EXPIRE_INTERVAL_SECONDS=%r; using default sweep interval.",
+        _metrics_expire_interval_raw,
+    )
+    MQTT_METRICS_EXPIRE_INTERVAL_SECONDS = None
+
 
 ZIGBEE2MQTT_AVAILABILITY = os.getenv("ZIGBEE2MQTT_AVAILABILITY", "False").lower() == "true"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -75,3 +106,12 @@ if custom_states:
     except (ValueError, AttributeError) as e:
         # Log warning but continue with defaults
         LOG.warning("Failed to parse STATE_VALUES environment variable: %s", e)
+
+
+def mqtt_metrics_expire_sweep_interval_seconds() -> int:
+    """Seconds between TTL sweeps when MQTT_METRICS_EXPIRE_SECONDS is enabled."""
+    if MQTT_METRICS_EXPIRE_SECONDS is None:
+        return 30
+    if MQTT_METRICS_EXPIRE_INTERVAL_SECONDS is not None:
+        return MQTT_METRICS_EXPIRE_INTERVAL_SECONDS
+    return max(1, min(MQTT_METRICS_EXPIRE_SECONDS // 2, 30))

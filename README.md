@@ -151,6 +151,8 @@ The list of parameters are:
   * `ESPHOME_TOPIC_PREFIXES`: MQTT topic used for ESPHome messages (default: "")
   * `HUBITAT_TOPIC_PREFIXES`: MQTT topic used for Hubitat messages (default: "hubitat/")
   * `EXPOSE_LAST_SEEN`: Enable additional gauges exposing last seen timestamp for each metrics
+  * `MQTT_METRICS_EXPIRE_SECONDS`: When set to a positive integer, remove Prometheus **payload** gauge time series that have not received an MQTT update within that many seconds (so Prometheus sees missing data instead of a frozen last value). Disabled when unset, empty, or zero. Does not apply to `message_total` counters. Set the TTL to several times your Prometheus `scrape_interval` to avoid flapping. Wall-clock jumps (NTP) can shift expiry timing slightly.
+  * `MQTT_METRICS_EXPIRE_INTERVAL_SECONDS`: Optional positive integer; seconds between internal TTL sweeps when expiry is enabled. If unset, the sweep interval defaults to `max(1, min(MQTT_METRICS_EXPIRE_SECONDS / 2, 30))`.
   * `PARSE_MSG_PAYLOAD`: Enable parsing and metrics of the payload. (default: true)
   * `PROMETHEUS_CERT`: Certificate to use for HTTPS. (default: None)
   * `PROMETHEUS_CERT_KEY`: Key file for the certificate. Note: you must specify both _CERT and _CERT_KEY, otherwise it will use plain http. (default: None)

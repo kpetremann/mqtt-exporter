@@ -9,6 +9,7 @@ import re
 import signal
 import ssl
 import sys
+import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -42,6 +43,116 @@ class PromMetricId:
 metric_refs: dict[str, list[tuple]] = defaultdict(list)
 prom_metrics: dict[PromMetricId, Gauge] = {}
 prom_msg_counter = None
+
+metrics_lock = threading.RLock()
+# (PromMetricId, label_values_tuple) -> unix time of last payload update; primary metrics only
+last_seen: dict[tuple[PromMetricId, tuple], float] = {}
+
+
+def _ordered_label_values(labels: dict, prom_metric_id: PromMetricId) -> tuple:
+    """Label values in the same order as the Gauge constructor for this metric."""
+    parts = [labels[settings.TOPIC_LABEL]]
+    if settings.MQTT_EXPOSE_CLIENT_ID:
+        parts.append(labels["client_id"])
+    for key in prom_metric_id.labels:
+        parts.append(labels[key])
+    return tuple(parts)
+
+
+def _last_seen_store_key(prom_metric_id: PromMetricId, labels: dict) -> tuple[PromMetricId, tuple]:
+    """Map a metric ref (including *_ts) to the last_seen dict key."""
+    if prom_metric_id.name.endswith("_ts"):
+        primary = PromMetricId(prom_metric_id.name[:-3], prom_metric_id.labels)
+        return (primary, _ordered_label_values(labels, primary))
+    return (prom_metric_id, _ordered_label_values(labels, prom_metric_id))
+
+
+def _prune_metric_refs_for_series(prom_metric_id: PromMetricId, labels: dict) -> None:
+    """Drop metric_refs entries for this primary metric and its optional *_ts companion."""
+    ts_id = None
+    if settings.EXPOSE_LAST_SEEN:
+        ts_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+
+    for samples in metric_refs.values():
+        samples[:] = [
+            s
+            for s in samples
+            if not (
+                isinstance(s[1], dict)
+                and s[1] == labels
+                and (s[0] == prom_metric_id or (ts_id is not None and s[0] == ts_id))
+            )
+        ]
+
+
+def _remove_prometheus_series_for_ttl(prom_metric_id: PromMetricId, label_values: tuple) -> None:
+    """Remove one time series from the registry and bookkeeping (caller must hold metrics_lock)."""
+    try:
+        prom_metrics[prom_metric_id].remove(*label_values)
+    except KeyError:
+        pass
+
+    if settings.EXPOSE_LAST_SEEN:
+        ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+        if ts_metric_id in prom_metrics:
+            try:
+                prom_metrics[ts_metric_id].remove(*label_values)
+            except KeyError:
+                pass
+
+    labels_dict = {
+        settings.TOPIC_LABEL: label_values[0],
+    }
+    i = 1
+    if settings.MQTT_EXPOSE_CLIENT_ID:
+        labels_dict["client_id"] = label_values[i]
+        i += 1
+    for key in prom_metric_id.labels:
+        labels_dict[key] = label_values[i]
+        i += 1
+
+    _prune_metric_refs_for_series(prom_metric_id, labels_dict)
+    last_seen.pop((prom_metric_id, label_values), None)
+
+
+def _metrics_ttl_sweep_unlocked() -> None:
+    if settings.MQTT_METRICS_EXPIRE_SECONDS is None:
+        return
+    now = time.time()
+    ttl = settings.MQTT_METRICS_EXPIRE_SECONDS
+    stale = [k for k, ts in last_seen.items() if now - ts >= ttl]
+    for prom_metric_id, label_values in stale:
+        _remove_prometheus_series_for_ttl(prom_metric_id, label_values)
+        LOG.debug("expired stale metric series %s %s", prom_metric_id, label_values)
+
+
+def _metrics_ttl_sweep_loop() -> None:
+    interval = settings.mqtt_metrics_expire_sweep_interval_seconds()
+    while True:
+        try:
+            with metrics_lock:
+                _metrics_ttl_sweep_unlocked()
+        except Exception:
+            LOG.exception("metric TTL sweep failed")
+        time.sleep(interval)
+
+
+def metrics_ttl_sweep_once() -> None:
+    """Run a single TTL sweep (used by tests)."""
+    with metrics_lock:
+        _metrics_ttl_sweep_unlocked()
+
+
+def _start_metrics_ttl_sweep_thread() -> None:
+    if settings.MQTT_METRICS_EXPIRE_SECONDS is None:
+        return
+    t = threading.Thread(target=_metrics_ttl_sweep_loop, name="mqtt-exporter-ttl", daemon=True)
+    t.start()
+    LOG.info(
+        "metric TTL enabled: expire after %s s, sweep every %s s",
+        settings.MQTT_METRICS_EXPIRE_SECONDS,
+        settings.mqtt_metrics_expire_sweep_interval_seconds(),
+    )
 
 
 def _create_msg_counter_metrics():
@@ -112,52 +223,58 @@ def _normalize_prometheus_metric_label_name(prom_metric_label_name):
 
 def _create_prometheus_metric(prom_metric_id, original_topic):
     """Create Prometheus metric if does not exist."""
-    if not prom_metrics.get(prom_metric_id):
-        if settings.MAX_METRICS > 0 and len(prom_metrics) >= settings.MAX_METRICS:
-            raise MaximumMetricReached(
-                f"metric limit reached ({settings.MAX_METRICS}): cannot create new metric {prom_metric_id}"
+    with metrics_lock:
+        if not prom_metrics.get(prom_metric_id):
+            if settings.MAX_METRICS > 0 and len(prom_metrics) >= settings.MAX_METRICS:
+                raise MaximumMetricReached(
+                    f"metric limit reached ({settings.MAX_METRICS}): cannot create new metric {prom_metric_id}"
+                )
+
+            labels = [settings.TOPIC_LABEL]
+            if settings.MQTT_EXPOSE_CLIENT_ID:
+                labels.append("client_id")
+            labels.extend(prom_metric_id.labels)
+
+            prom_metrics[prom_metric_id] = Gauge(
+                prom_metric_id.name, "metric generated from MQTT message.", labels
             )
+            metric_refs[original_topic].append((prom_metric_id, labels))
 
-        labels = [settings.TOPIC_LABEL]
-        if settings.MQTT_EXPOSE_CLIENT_ID:
-            labels.append("client_id")
-        labels.extend(prom_metric_id.labels)
+            if settings.EXPOSE_LAST_SEEN:
+                ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+                prom_metrics[ts_metric_id] = Gauge(
+                    ts_metric_id.name, "timestamp of metric generated from MQTT message.", labels
+                )
+                metric_refs[original_topic].append((ts_metric_id, labels))
 
-        prom_metrics[prom_metric_id] = Gauge(
-            prom_metric_id.name, "metric generated from MQTT message.", labels
-        )
-        metric_refs[original_topic].append((prom_metric_id, labels))
-
-        if settings.EXPOSE_LAST_SEEN:
-            ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
-            prom_metrics[ts_metric_id] = Gauge(
-                ts_metric_id.name, "timestamp of metric generated from MQTT message.", labels
-            )
-            metric_refs[original_topic].append((ts_metric_id, labels))
-
-        LOG.info("creating prometheus metric: %s", prom_metric_id)
+            LOG.info("creating prometheus metric: %s", prom_metric_id)
 
 
 def _add_prometheus_sample(
     topic, original_topic, prom_metric_id, metric_value, client_id, additional_labels
 ):
-    if prom_metric_id not in prom_metrics:
-        return
+    with metrics_lock:
+        if prom_metric_id not in prom_metrics:
+            return
 
-    labels = {settings.TOPIC_LABEL: topic}
-    if settings.MQTT_EXPOSE_CLIENT_ID:
-        labels["client_id"] = client_id
-    labels.update(additional_labels)
+        labels = {settings.TOPIC_LABEL: topic}
+        if settings.MQTT_EXPOSE_CLIENT_ID:
+            labels["client_id"] = client_id
+        labels.update(additional_labels)
 
-    prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
-    if not (prom_metric_id, labels) not in metric_refs[original_topic]:
-        metric_refs[original_topic].append((prom_metric_id, labels))
+        prom_metrics[prom_metric_id].labels(**labels).set(metric_value)
+        if not (prom_metric_id, labels) not in metric_refs[original_topic]:
+            metric_refs[original_topic].append((prom_metric_id, labels))
 
-    if settings.EXPOSE_LAST_SEEN:
-        ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
-        prom_metrics[ts_metric_id].labels(**labels).set(int(time.time()))
-        if not (ts_metric_id, labels) not in metric_refs[original_topic]:
-            metric_refs[original_topic].append((ts_metric_id, labels))
+        if settings.EXPOSE_LAST_SEEN:
+            ts_metric_id = PromMetricId(f"{prom_metric_id.name}_ts", prom_metric_id.labels)
+            prom_metrics[ts_metric_id].labels(**labels).set(int(time.time()))
+            if not (ts_metric_id, labels) not in metric_refs[original_topic]:
+                metric_refs[original_topic].append((ts_metric_id, labels))
+
+        if settings.MQTT_METRICS_EXPIRE_SECONDS is not None:
+            key = _last_seen_store_key(prom_metric_id, labels)
+            last_seen[key] = time.time()
 
     LOG.debug("new value for %s: %s", prom_metric_id, metric_value)
 
@@ -451,33 +568,40 @@ def _zigbee2mqtt_rename(msg):
 
     payload = json.loads(msg.payload)
     old_topic = f"zigbee2mqtt/{payload['data']['from']}"
-    if old_topic not in metric_refs:
-        return
+    with metrics_lock:
+        if old_topic not in metric_refs:
+            return
 
-    for sample in metric_refs[old_topic]:
-        try:
-            prom_metrics[sample[0]].remove(*sample[1].values())
-        except KeyError:
-            pass
+        for sample in metric_refs[old_topic]:
+            if isinstance(sample[1], dict):
+                last_seen.pop(_last_seen_store_key(sample[0], sample[1]), None)
+            try:
+                if isinstance(sample[1], dict):
+                    prom_metrics[sample[0]].remove(*_ordered_label_values(sample[1], sample[0]))
+            except KeyError:
+                pass
 
-    del metric_refs[old_topic]
+        del metric_refs[old_topic]
 
-    # Remove old availability metrics following renaming
+        # Remove old availability metrics following renaming
 
-    if not settings.ZIGBEE2MQTT_AVAILABILITY:
-        return
+        if not settings.ZIGBEE2MQTT_AVAILABILITY:
+            return
 
-    old_topic_availability = f"{old_topic}{ZIGBEE2MQTT_AVAILABILITY_SUFFIX}"
-    if old_topic_availability not in metric_refs:
-        return
+        old_topic_availability = f"{old_topic}{ZIGBEE2MQTT_AVAILABILITY_SUFFIX}"
+        if old_topic_availability not in metric_refs:
+            return
 
-    for sample in metric_refs[old_topic_availability]:
-        try:
-            prom_metrics[sample[0]].remove(*sample[1].values())
-        except KeyError:
-            pass
+        for sample in metric_refs[old_topic_availability]:
+            if isinstance(sample[1], dict):
+                last_seen.pop(_last_seen_store_key(sample[0], sample[1]), None)
+            try:
+                if isinstance(sample[1], dict):
+                    prom_metrics[sample[0]].remove(*_ordered_label_values(sample[1], sample[0]))
+            except KeyError:
+                pass
 
-    del metric_refs[old_topic_availability]
+        del metric_refs[old_topic_availability]
 
 
 def expose_metrics(_, userdata, msg):
@@ -582,6 +706,8 @@ def run():
         client_cafile=settings.PROMETHEUS_CA,
         client_capath=settings.PROMETHEUS_CA_DIR,
     )
+
+    _start_metrics_ttl_sweep_thread()
 
     # define mqtt client
     client.on_connect = subscribe
