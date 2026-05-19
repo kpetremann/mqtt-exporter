@@ -2,7 +2,7 @@
 [![Helm chart release](https://github.com/kpetremann/mqtt-exporter/actions/workflows/helm-release.yml/badge.svg)](https://github.com/kpetremann/mqtt-exporter/actions/workflows/helm-release.yml)
 
 This repository contains the charts used for installing MQTT-exporter using Helm. Currently, this chart only contains the following chart:
-- `mqtt-exporter` - The chart for MQTT-exporter. For the actual MQTT-exporter repository, go [here]([https://github.com/longhorn/longhorn](https://github.com/kpetremann/mqtt-exporter)).
+- `mqtt-exporter` - The chart for MQTT-exporter. For the actual MQTT-exporter repository, go [here](https://github.com/kpetremann/mqtt-exporter).
 
 ## Adding the Chart
 ```
