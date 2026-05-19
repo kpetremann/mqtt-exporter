@@ -6,6 +6,6 @@ This repository contains the charts used for installing MQTT-exporter using Helm
 
 ## Adding the Chart
 ```
-$ helm repo add longhorn https://kpetremann.github.io/mqtt-exporter
+$ helm repo add mqtt-exporter https://kpetremann.github.io/mqtt-exporter
 $ helm repo update
 ```
